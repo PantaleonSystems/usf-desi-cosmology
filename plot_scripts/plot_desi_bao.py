@@ -24,11 +24,17 @@ Date: 2026
 """
 
 import os
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from getdist import plots
 from getdist.mcsamples import loadMCSamples
+
+# Ensure project root is on sys.path so usf_constants can be imported when
+# the script is invoked as  python plot_scripts/plot_desi_bao.py
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from usf_constants import C_KM_S, OMEGA_B_H2, OMEGA_GAMMA_H2, Z_DRAG, DELTA
 
 os.makedirs('results', exist_ok=True)
 
@@ -59,15 +65,22 @@ g.export('results/comparison_triangle.pdf')
 # ============================================================
 
 def H_feu(z, H0, Om, aq, zt):
-    """USF Hubble parameter H(z) [km/s/Mpc]."""
-    delta = 0.25
-    supp = 1.0 / (1.0 + np.exp((z - zt) / delta))
-    Oz = aq * supp * (1+z)**3 / (1.0 + (1+z)**2 / zt**2)
-    Esq = Om*(1+z)**3 + (1.0 - Om) + Oz
-    supp0 = 1.0 / (1.0 + np.exp(-zt / delta))
-    Oz0 = aq * supp0 / (1.0 + 1.0 / zt**2)
-    Esq0 = Om*(1.0) + (1.0 - Om) + Oz0
-    return H0 * np.sqrt(Esq / Esq0)
+    """USF Hubble parameter H(z) [km/s/Mpc], consistent with feu_background."""
+    Omega_r = OMEGA_GAMMA_H2 / (H0 / 100.0) ** 2
+
+    # USF correction at z=0 (required before setting Omega_L)
+    supp0 = 1.0 / (1.0 + np.exp(-zt / DELTA))
+    Oz0 = aq * supp0 / (1.0 + 1.0 / zt ** 2)
+
+    # Flat-universe condition: Ω_m + Ω_r + Ω_Λ + Ω_USF(0) = 1
+    Omega_L = 1.0 - Om - Omega_r - Oz0
+
+    supp = 1.0 / (1.0 + np.exp(np.clip((z - zt) / DELTA, -500, 500)))
+    Oz = aq * supp * (1.0 + z) ** 3 / (1.0 + (1.0 + z) ** 2 / zt ** 2)
+    # E²(0) = 1 by construction with the flat-universe Omega_L above.
+    Esq = Om * (1.0 + z) ** 3 + Omega_r * (1.0 + z) ** 4 + Omega_L + Oz
+
+    return H0 * np.sqrt(Esq)
 
 def D_M_feu(z_val, H0, Om, aq, zt, npts=200):
     """Comoving distance D_M(z) [Mpc] for the USF model."""
@@ -75,7 +88,20 @@ def D_M_feu(z_val, H0, Om, aq, zt, npts=200):
     H_int = H_feu(z_int, H0, Om, aq, zt)
     dz = z_int[1] - z_int[0]
     integral = np.sum(1.0 / H_int) * dz
-    return 299792.458 * integral
+    return C_KM_S * integral
+
+def r_s_feu(H0, Om, aq, zt):
+    """Sound horizon at the drag epoch (Mpc), consistent with bao_desi_likelihood."""
+    from scipy import integrate
+
+    def integrand(z):
+        R = 3.0 * OMEGA_B_H2 / (4.0 * OMEGA_GAMMA_H2 * (1.0 + z))
+        cs = C_KM_S / np.sqrt(3.0 * (1.0 + R))
+        return cs / H_feu(z, H0, Om, aq, zt)
+
+    result, _ = integrate.quad(integrand, Z_DRAG, np.inf, limit=200,
+                               epsabs=1e-6, epsrel=1e-6)
+    return result
 
 # Best-fit parameters from USF chain
 feu_stats = feu.getMargeStats()
@@ -83,6 +109,10 @@ H0_feu = feu_stats.parWithName('H0').mean
 Om_feu = feu_stats.parWithName('Omega_m').mean
 aq_feu = feu_stats.parWithName('alpha_q').mean
 zt_feu = feu_stats.parWithName('z_trans').mean
+
+# Compute rd consistently with the likelihood
+rd_feu = r_s_feu(H0_feu, Om_feu, aq_feu, zt_feu)
+print(f"Computed rd for best-fit USF: {rd_feu:.2f} Mpc")
 
 # Load the DESI 2024 mean file (columns: z, value, quantity)
 bao_file = './cobaya_packages/data/bao_data/desi_bao_dr2/desi_gaussian_bao_ALL_GCcomb_mean.txt'
@@ -92,18 +122,15 @@ data = pd.read_csv(bao_file, comment='#', sep=r'\s+',
 dm = data[data['quantity'] == 'DM_over_rs']
 dh = data[data['quantity'] == 'DH_over_rs']
 
-# Sound horizon (fixed, consistent with Planck 2018)
-rd = 147.0   # Mpc
-
-# USF predictions for the BAO observables
+# USF predictions for the BAO observables, using self-consistent rd
 z_dm = dm['z'].values
 obs_dm = dm['value'].values
-pred_dm = np.array([D_M_feu(z, H0_feu, Om_feu, aq_feu, zt_feu) / rd for z in z_dm])
+pred_dm = np.array([D_M_feu(z, H0_feu, Om_feu, aq_feu, zt_feu) / rd_feu for z in z_dm])
 
 z_dh = dh['z'].values
 obs_dh = dh['value'].values
 H_at_dh = H_feu(z_dh, H0_feu, Om_feu, aq_feu, zt_feu)
-pred_dh = 299792.458 / (rd * H_at_dh)
+pred_dh = C_KM_S / (rd_feu * H_at_dh)
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 

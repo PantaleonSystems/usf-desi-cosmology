@@ -23,6 +23,7 @@ Date: 2026
 import numpy as np
 from scipy import integrate
 from cobaya.theory import Theory
+from usf_constants import C_KM_S, OMEGA_B_H2, OMEGA_GAMMA_H2, Z_DRAG, DELTA
 
 
 class FEU(Theory):
@@ -51,9 +52,8 @@ class FEU(Theory):
         "z_trans": None,
     }
 
-    # Fixed physical constants and model settings.
-    _delta: float = 0.25
-    _c_km_s: float = 299792.458           # speed of light [km/s]
+    _delta: float = DELTA
+    _c_km_s: float = C_KM_S
 
     def initialize(self) -> None:
         """Perform any one-time setup (no heavy work needed here)."""
@@ -74,26 +74,24 @@ class FEU(Theory):
         :returns: E(z) values.
         """
         z = np.asarray(z, dtype=np.float64)
-        Omega_L = 1.0 - self.Omega_m
+        Omega_r = OMEGA_GAMMA_H2 / (self.H0 / 100.0) ** 2
 
-        # Radiation density parameter (Planck 2018)
-        Omega_r = 4.15e-5 / (self.H0 / 100.0)**2
+        # USF correction at z=0 (required before setting Omega_L)
+        supp0 = 1.0 / (1.0 + np.exp(-self.z_trans / self._delta))
+        Oz0 = self.alpha_q * supp0 / (1.0 + 1.0 / self.z_trans ** 2)
 
-        # Logistic suppression factor.
+        # Flat-universe condition: Ω_m + Ω_r + Ω_Λ + Ω_USF(0) = 1
+        Omega_L = 1.0 - self.Omega_m - Omega_r - Oz0
+
         arg = np.clip((z - self.z_trans) / self._delta, -500, 500)
         suppression = 1.0 / (1.0 + np.exp(arg))
+        Oz = (self.alpha_q * suppression * (1.0 + z) ** 3 /
+              (1.0 + (1.0 + z) ** 2 / self.z_trans ** 2))
+        # With the flat-universe Omega_L, E²(0) = 1 by construction.
+        Esq = (self.Omega_m * (1.0 + z) ** 3 + Omega_r * (1.0 + z) ** 4
+               + Omega_L + Oz)
 
-        # Effective geometric correction term.
-        Oz = (self.alpha_q * suppression * (1.0 + z)**3 /
-              (1.0 + (1.0 + z)**2 / self.z_trans**2))
-        Esq = (self.Omega_m * (1.0 + z)**3 + Omega_r * (1.0 + z)**4 + Omega_L + Oz)
-
-        # Normalisation so that E(0) = 1.
-        supp0 = 1.0 / (1.0 + np.exp(-self.z_trans / self._delta))
-        Oz0 = self.alpha_q * supp0 / (1.0 + 1.0 / self.z_trans**2)
-        Esq0 = self.Omega_m + Omega_r + Omega_L + Oz0
-
-        return np.sqrt(np.maximum(Esq / Esq0, 1e-30))
+        return np.sqrt(np.maximum(Esq, 1e-30))
 
     # ------------------------------------------------------------------
     # Public interface expected by Cobaya likelihoods
@@ -134,29 +132,17 @@ class FEU(Theory):
         """
         return self.get_comoving_distance(z) / (1.0 + z)
 
-    def get_r_s(self, z_drag: float = 1059.94) -> float:
+    def get_r_s(self, z_drag: float = Z_DRAG) -> float:
         """
         Sound horizon at the drag epoch.
-
-        Uses the standard baryon-to-photon ratio and the adiabatic sound
-        speed, integrated from z_drag to infinity.
-
-        :param z_drag: Redshift of the drag epoch (default Planck 2018).
-        :returns: Sound horizon r_d in Mpc.
         """
-        # Fixed baryon and radiation parameters (Planck 2018).
-        Omega_b = 0.0486
-        rho_gamma_fac = 8.24e-5
-
         def integrand(z):
-            R = 3.0 * Omega_b / (4.0 * rho_gamma_fac * (1.0 + z))
+            R = 3.0 * OMEGA_B_H2 / (4.0 * OMEGA_GAMMA_H2 * (1.0 + z))
             cs = self._c_km_s / np.sqrt(3.0 * (1.0 + R))
             return cs / (self.H0 * self._E(z))
 
-        result, _ = integrate.quad(
-            integrand, z_drag, np.inf,
-            limit=200, epsabs=1e-6, epsrel=1e-6
-        )
+        result, _ = integrate.quad(integrand, z_drag, np.inf,
+                                   limit=200, epsabs=1e-6, epsrel=1e-6)
         return result
 
     # ------------------------------------------------------------------

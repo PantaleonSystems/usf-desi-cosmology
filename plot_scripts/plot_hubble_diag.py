@@ -21,10 +21,14 @@ Date: 2026
 """
 
 import os
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from getdist.mcsamples import loadMCSamples
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from usf_constants import C_KM_S, OMEGA_GAMMA_H2, DELTA
 
 os.makedirs('results', exist_ok=True)
 
@@ -40,19 +44,26 @@ aq_feu = feu_stats.parWithName('alpha_q').mean
 zt_feu = feu_stats.parWithName('z_trans').mean
 
 # ============================================================
-# 2. USF distance functions
+# 2. USF distance functions (consistent with Cobaya theory module)
 # ============================================================
 
 def H_feu(z, H0, Om, aq, zt):
-    """USF Hubble parameter H(z) [km/s/Mpc]."""
-    delta = 0.25
-    supp = 1.0 / (1.0 + np.exp((z - zt) / delta))
-    Oz = aq * supp * (1+z)**3 / (1.0 + (1+z)**2 / zt**2)
-    Esq = Om*(1+z)**3 + (1.0 - Om) + Oz
-    supp0 = 1.0 / (1.0 + np.exp(-zt / delta))
-    Oz0 = aq * supp0 / (1.0 + 1.0 / zt**2)
-    Esq0 = Om*(1.0) + (1.0 - Om) + Oz0
-    return H0 * np.sqrt(Esq / Esq0)
+    """USF Hubble parameter H(z) [km/s/Mpc], consistent with feu_background."""
+    Omega_r = OMEGA_GAMMA_H2 / (H0 / 100.0) ** 2
+
+    # USF correction at z=0 (required before setting Omega_L)
+    supp0 = 1.0 / (1.0 + np.exp(-zt / DELTA))
+    Oz0 = aq * supp0 / (1.0 + 1.0 / zt ** 2)
+
+    # Flat-universe condition: Ω_m + Ω_r + Ω_Λ + Ω_USF(0) = 1
+    Omega_L = 1.0 - Om - Omega_r - Oz0
+
+    supp = 1.0 / (1.0 + np.exp(np.clip((z - zt) / DELTA, -500, 500)))
+    Oz = aq * supp * (1.0 + z) ** 3 / (1.0 + (1.0 + z) ** 2 / zt ** 2)
+    # E²(0) = 1 by construction with the flat-universe Omega_L above.
+    Esq = Om * (1.0 + z) ** 3 + Omega_r * (1.0 + z) ** 4 + Omega_L + Oz
+
+    return H0 * np.sqrt(Esq)
 
 def dL_feu(z, H0, Om, aq, zt, npts=200):
     """Luminosity distance d_L(z) [Mpc] for the USF model."""
@@ -60,7 +71,7 @@ def dL_feu(z, H0, Om, aq, zt, npts=200):
     H_int = H_feu(z_int, H0, Om, aq, zt)
     dz = z_int[1] - z_int[0]
     integral = np.sum(1.0 / H_int) * dz
-    return (1 + z) * 299792.458 * integral
+    return (1.0 + z) * C_KM_S * integral
 
 # ============================================================
 # 3. Load Pantheon+SH0ES data
