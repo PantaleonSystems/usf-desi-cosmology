@@ -10,12 +10,16 @@ params:
     ref: 0.315
     proposal: 0.005
   alpha_q:
-    prior: { min: 0.0, max: 0.1 }
+    prior: { min: -0.05, max: 0.1 }
     ref: 0.015
     proposal: 0.002
   z_trans:
     prior: { min: 0.5, max: 5.0 }
     ref: 1.8
+    proposal: 0.05
+  M:
+    prior: { min: -20, max: -18 }
+    ref: -19.2
     proposal: 0.05
 
 theory:
@@ -26,10 +30,10 @@ likelihood:
   theory_module.bao_desi_likelihood.BAODESILikelihood:
     python_path: .
     data_path: ./cobaya_packages/data/bao_data/desi_bao_dr2
-  theory_module.sh0es_likelihood.SH0ESLikelihood:
-    python_path: .
+  sn.pantheonplus:
+    marginalize_calibration: false
 
-output: chains/feu_bao_sn
+output: chains/feu_bao_sn_sh0es
 sampler:
   mcmc:
     Rminus1_stop: 0.01

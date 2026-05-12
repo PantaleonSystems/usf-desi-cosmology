@@ -1,26 +1,39 @@
 packages_path: ./cobaya_packages
 
+# Flat-ΛCDM reference run using the same custom modules as the FEU run.
+# alpha_q is fixed to zero so the FEU background reduces exactly to ΛCDM.
+# No CAMB required — the comparison is apples-to-apples with the FEU chain.
+
 likelihood:
-  bao.desi_dr2.desi_bao_all: null
-  sn.pantheonplus: null
-  theory_module.sh0es_likelihood.SH0ESLikelihood:
+  theory_module.bao_desi_likelihood.BAODESILikelihood:
     python_path: .
+    data_path: ./cobaya_packages/data/bao_data/desi_bao_dr2
+  sn.pantheonplus:
+    marginalize_calibration: false
 
 params:
   H0:
     prior: { min: 60, max: 80 }
-    ref: 73.0
-  ombh2:
-    prior: { min: 0.018, max: 0.026 }
-    ref: 0.0224
-  omch2:
-    prior: { min: 0.05, max: 0.2 }
-    ref: 0.12
+    ref: 68.0
+    proposal: 0.5
+  Omega_m:
+    prior: { min: 0.2, max: 0.4 }
+    ref: 0.315
+    proposal: 0.005
+  alpha_q:
+    value: 0.0
+  z_trans:
+    value: 2.0
+  M:
+    prior: { min: -20, max: -18 }
+    ref: -19.2
+    proposal: 0.05
 
 theory:
-  camb: null
+  theory_module.feu_background.FEU:
+    python_path: .
 
-output: chains/lcdm_bao_sn
+output: chains/lcdm_bao_sn_sh0es
 sampler:
   mcmc:
     Rminus1_stop: 0.01
