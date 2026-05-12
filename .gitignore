@@ -3,6 +3,8 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+/.claude
+
 # C extensions
 *.so
 
@@ -216,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Cobaya packages cache (large data files, not versioned)
+cobaya_packages/
+
+# Cobaya chain sample files (heavy – only metadata is tracked)
+chains/*.txt
