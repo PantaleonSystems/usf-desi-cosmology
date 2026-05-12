@@ -1,0 +1,27 @@
+packages_path: ./cobaya_packages
+
+likelihood:
+  bao.desi_dr2.desi_bao_all: null
+  sn.pantheonplus: null
+  theory_module.sh0es_likelihood.SH0ESLikelihood:
+    python_path: .
+
+params:
+  H0:
+    prior: { min: 60, max: 80 }
+    ref: 73.0
+  ombh2:
+    prior: { min: 0.018, max: 0.026 }
+    ref: 0.0224
+  omch2:
+    prior: { min: 0.05, max: 0.2 }
+    ref: 0.12
+
+theory:
+  camb: null
+
+output: chains/lcdm_bao_sn
+sampler:
+  mcmc:
+    Rminus1_stop: 0.01
+    max_tries: 10000
