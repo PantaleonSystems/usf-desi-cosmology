@@ -94,17 +94,21 @@ class BAODESILikelihood(Likelihood):
         """
         z = np.asarray(z, dtype=np.float64)
         Omega_L = 1.0 - Omega_m
+
+        # Inside _E, after Omega_L = 1.0 - Omega_m
+        Omega_r = 4.15e-5 / (H0 / 100.0)**2
         # Logistic suppression factor.
         suppression = 1.0 / (1.0 + np.exp(
             np.clip((z - z_trans) / self._delta, -500, 500)))
         Oz = (alpha_q * suppression * (1.0 + z)**3
               / (1.0 + (1.0 + z)**2 / z_trans**2))
-        Esq = Omega_m * (1.0 + z)**3 + Omega_L + Oz
+        Esq = (Omega_m * (1.0 + z)**3 + Omega_r * (1.0 + z)**4 + Omega_L + Oz)
+# also update Esq0 simi
 
         # Normalise so that E(z=0) = 1.
         supp0 = 1.0 / (1.0 + np.exp(-z_trans / self._delta))
         Oz0   = alpha_q * supp0 / (1.0 + 1.0 / z_trans**2)
-        Esq0  = Omega_m + Omega_L + Oz0
+        Esq0 = Omega_m + Omega_r + Omega_L + Oz0
 
         return np.sqrt(np.maximum(Esq / Esq0, 1e-30))
 

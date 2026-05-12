@@ -76,6 +76,9 @@ class FEU(Theory):
         z = np.asarray(z, dtype=np.float64)
         Omega_L = 1.0 - self.Omega_m
 
+        # Radiation density parameter (Planck 2018)
+        Omega_r = 4.15e-5 / (self.H0 / 100.0)**2
+
         # Logistic suppression factor.
         arg = np.clip((z - self.z_trans) / self._delta, -500, 500)
         suppression = 1.0 / (1.0 + np.exp(arg))
@@ -83,12 +86,12 @@ class FEU(Theory):
         # Effective geometric correction term.
         Oz = (self.alpha_q * suppression * (1.0 + z)**3 /
               (1.0 + (1.0 + z)**2 / self.z_trans**2))
-        Esq = self.Omega_m * (1.0 + z)**3 + Omega_L + Oz
+        Esq = (self.Omega_m * (1.0 + z)**3 + Omega_r * (1.0 + z)**4 + Omega_L + Oz)
 
         # Normalisation so that E(0) = 1.
         supp0 = 1.0 / (1.0 + np.exp(-self.z_trans / self._delta))
         Oz0 = self.alpha_q * supp0 / (1.0 + 1.0 / self.z_trans**2)
-        Esq0 = self.Omega_m + Omega_L + Oz0
+        Esq0 = self.Omega_m + Omega_r + Omega_L + Oz0
 
         return np.sqrt(np.maximum(Esq / Esq0, 1e-30))
 
