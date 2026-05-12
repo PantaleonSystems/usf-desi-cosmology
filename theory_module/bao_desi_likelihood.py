@@ -18,6 +18,7 @@ import os
 import numpy as np
 from scipy import integrate
 from cobaya.likelihood import Likelihood
+from usf_constants import C_KM_S, OMEGA_B_H2, OMEGA_GAMMA_H2, Z_DRAG, DELTA
 
 
 class BAODESILikelihood(Likelihood):
@@ -34,9 +35,7 @@ class BAODESILikelihood(Likelihood):
     :ivar params: Dictionary of required parameter names (all mapped to
         the USF model).
     """
-
-    # Path to the data directory; to be set in the YAML configuration.
-    data_path: str = ""
+    data_path = ""
 
     # Declaration of the input parameters expected by this likelihood.
     params = {
@@ -77,9 +76,8 @@ class BAODESILikelihood(Likelihood):
         cov = np.loadtxt(cov_file)
         self.cov_inv = np.linalg.inv(cov)
 
-        # Physical constants and fixed parameters.
-        self._c_km_s = 299792.458          # speed of light in km/s
-        self._delta  = 0.25                # transition width (Sec. 2)
+        self._c_km_s = C_KM_S
+        self._delta  = DELTA
 
     def _E(self, z, H0, Omega_m, alpha_q, z_trans):
         """
@@ -93,24 +91,24 @@ class BAODESILikelihood(Likelihood):
         :returns: E(z) array.
         """
         z = np.asarray(z, dtype=np.float64)
-        Omega_L = 1.0 - Omega_m
+        Omega_r = OMEGA_GAMMA_H2 / (H0 / 100.0) ** 2
 
-        # Inside _E, after Omega_L = 1.0 - Omega_m
-        Omega_r = 4.15e-5 / (H0 / 100.0)**2
-        # Logistic suppression factor.
+        # USF correction at z=0 (required before setting Omega_L)
+        supp0 = 1.0 / (1.0 + np.exp(-z_trans / self._delta))
+        Oz0   = alpha_q * supp0 / (1.0 + 1.0 / z_trans ** 2)
+
+        # Flat-universe condition: Ω_m + Ω_r + Ω_Λ + Ω_USF(0) = 1
+        Omega_L = 1.0 - Omega_m - Omega_r - Oz0
+
         suppression = 1.0 / (1.0 + np.exp(
             np.clip((z - z_trans) / self._delta, -500, 500)))
-        Oz = (alpha_q * suppression * (1.0 + z)**3
-              / (1.0 + (1.0 + z)**2 / z_trans**2))
-        Esq = (Omega_m * (1.0 + z)**3 + Omega_r * (1.0 + z)**4 + Omega_L + Oz)
-# also update Esq0 simi
+        Oz = (alpha_q * suppression * (1.0 + z) ** 3
+              / (1.0 + (1.0 + z) ** 2 / z_trans ** 2))
+        # With the flat-universe Omega_L, E²(0) = 1 by construction.
+        Esq = (Omega_m * (1.0 + z) ** 3 + Omega_r * (1.0 + z) ** 4
+               + Omega_L + Oz)
 
-        # Normalise so that E(z=0) = 1.
-        supp0 = 1.0 / (1.0 + np.exp(-z_trans / self._delta))
-        Oz0   = alpha_q * supp0 / (1.0 + 1.0 / z_trans**2)
-        Esq0 = Omega_m + Omega_r + Omega_L + Oz0
-
-        return np.sqrt(np.maximum(Esq / Esq0, 1e-30))
+        return np.sqrt(np.maximum(Esq, 1e-30))
 
     def _comoving_distance(self, z, H0, Omega_m, alpha_q, z_trans):
         """
@@ -132,26 +130,14 @@ class BAODESILikelihood(Likelihood):
         )
         return result
 
-    def _r_s(self, H0, Omega_m, alpha_q, z_trans, z_drag=1059.94):
+    def _r_s(self, H0, Omega_m, alpha_q, z_trans, z_drag=Z_DRAG):
         """
         Sound horizon at the drag epoch.
 
-        The calculation assumes a standard baryon-to-photon ratio and uses
-        the adiabatic sound speed.
-
-        :param H0: Hubble constant (km/s/Mpc).
-        :param Omega_m: Matter density fraction.
-        :param alpha_q: Geometric correction amplitude.
-        :param z_trans: Transition redshift.
-        :param z_drag: Redshift of the drag epoch (default from Planck 2018).
-        :returns: Sound horizon r_d in Mpc.
+        Uses the physical baryon and photon densities fixed to Planck 2018.
         """
-        # Baryon and radiation densities (fixed to Planck 2018 best‑fit).
-        Omega_b = 0.0486       # physical baryon density today (Omega_b h^2 / h^2)
-        rho_gamma_fac = 8.24e-5  # factor converting Omega_b to the radiation epoch
-
         def integrand(z):
-            R = 3.0 * Omega_b / (4.0 * rho_gamma_fac * (1.0 + z))
+            R = 3.0 * OMEGA_B_H2 / (4.0 * OMEGA_GAMMA_H2 * (1.0 + z))
             cs = self._c_km_s / np.sqrt(3.0 * (1.0 + R))
             return cs / (H0 * self._E(z, H0, Omega_m, alpha_q, z_trans))
 
