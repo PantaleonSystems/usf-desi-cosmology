@@ -104,6 +104,30 @@ def r_s_feu(H0, Om, aq, zt):
                                epsabs=1e-6, epsrel=1e-6)
     return result
 
+# --- ΛCDM Hubble and distances ---------------------------------
+def H_lcdm(z, H0, Om):
+    Omega_r = OMEGA_GAMMA_H2 / (H0 / 100.0) ** 2
+    Omega_L = 1.0 - Om - Omega_r
+    Esq = Om * (1.0 + z) ** 3 + Omega_r * (1.0 + z) ** 4 + Omega_L
+    return H0 * np.sqrt(Esq)
+
+def D_M_lcdm(z_val, H0, Om, npts=200):
+    z_int = np.linspace(0, z_val, npts)
+    H_int = H_lcdm(z_int, H0, Om)
+    dz = z_int[1] - z_int[0]
+    integral = np.sum(1.0 / H_int) * dz
+    return C_KM_S * integral
+
+def r_s_lcdm(H0, Om):
+    from scipy import integrate
+    def integrand(z):
+        R = 3.0 * OMEGA_B_H2 / (4.0 * OMEGA_GAMMA_H2 * (1.0 + z))
+        cs = C_KM_S / np.sqrt(3.0 * (1.0 + R))
+        return cs / H_lcdm(z, H0, Om)
+    result, _ = integrate.quad(integrand, Z_DRAG, np.inf, limit=200,
+                               epsabs=1e-6, epsrel=1e-6)
+    return result
+
 # Best-fit parameters from USF chain
 feu_stats = feu.getMargeStats()
 H0_feu = feu_stats.parWithName('H0').mean
@@ -111,47 +135,91 @@ Om_feu = feu_stats.parWithName('Omega_m').mean
 aq_feu = feu_stats.parWithName('alpha_q').mean
 zt_feu = feu_stats.parWithName('z_trans').mean
 
+lcdm_stats = lcdm.getMargeStats()
+H0_lcdm = lcdm_stats.parWithName('H0').mean
+Om_lcdm = lcdm_stats.parWithName('Omega_m').mean
+
 # Compute rd consistently with the likelihood
-rd_feu = r_s_feu(H0_feu, Om_feu, aq_feu, zt_feu)
-print(f"Computed rd for best-fit USF: {rd_feu:.2f} Mpc")
+# --- Sound horizons -------------------------------------------
+rd_feu  = r_s_feu(H0_feu, Om_feu, aq_feu, zt_feu)
+rd_lcdm = r_s_lcdm(H0_lcdm, Om_lcdm)
+print(f"Computed rd for best‑fit USF: {rd_feu:.2f} Mpc")
+print(f"Computed rd for best‑fit ΛCDM: {rd_lcdm:.2f} Mpc")
 
 # Load the DESI 2024 mean file (columns: z, value, quantity)
+# --- Load DESI data -------------------------------------------
 bao_file = './cobaya_packages/data/bao_data/desi_bao_dr2/desi_gaussian_bao_ALL_GCcomb_mean.txt'
 data = pd.read_csv(bao_file, comment='#', sep=r'\s+',
                    names=['z', 'value', 'quantity'])
-
 dm = data[data['quantity'] == 'DM_over_rs']
 dh = data[data['quantity'] == 'DH_over_rs']
 
-# USF predictions for the BAO observables, using self-consistent rd
-z_dm = dm['z'].values
+z_dm  = dm['z'].values
 obs_dm = dm['value'].values
-pred_dm = np.array([D_M_feu(z, H0_feu, Om_feu, aq_feu, zt_feu) / rd_feu for z in z_dm])
-
-z_dh = dh['z'].values
+z_dh  = dh['z'].values
 obs_dh = dh['value'].values
-H_at_dh = H_feu(z_dh, H0_feu, Om_feu, aq_feu, zt_feu)
-pred_dh = C_KM_S / (rd_feu * H_at_dh)
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+# --- Model predictions ----------------------------------------
+# USF
+pred_dm_feu = np.array([D_M_feu(z, H0_feu, Om_feu, aq_feu, zt_feu) / rd_feu for z in z_dm])
+H_dh_feu   = H_feu(z_dh, H0_feu, Om_feu, aq_feu, zt_feu)
+pred_dh_feu = C_KM_S / (rd_feu * H_dh_feu)
 
-ax1.plot(z_dm, obs_dm, 'bo', label='DESI (D$_M$/r$_d$)')
-ax1.plot(z_dm, pred_dm, 'r-', linewidth=2, label='USF best-fit')
-ax1.set_xlabel('z')
+# ΛCDM
+pred_dm_lcdm = np.array([D_M_lcdm(z, H0_lcdm, Om_lcdm) / rd_lcdm for z in z_dm])
+H_dh_lcdm    = H_lcdm(z_dh, H0_lcdm, Om_lcdm)
+pred_dh_lcdm = C_KM_S / (rd_lcdm * H_dh_lcdm)
+
+# --- Residuals (percentage) -----------------------------------
+res_dm_usf  = 100.0 * (obs_dm - pred_dm_feu) / obs_dm
+res_dm_lcdm = 100.0 * (obs_dm - pred_dm_lcdm) / obs_dm
+res_dh_usf  = 100.0 * (obs_dh - pred_dh_feu) / obs_dh
+res_dh_lcdm = 100.0 * (obs_dh - pred_dh_lcdm) / obs_dh
+
+# --- Plot (2 rows × 2 columns) --------------------------------
+fig, axes = plt.subplots(2, 2, figsize=(14, 10),
+                         gridspec_kw={'height_ratios': [2, 1]},
+                         sharex='col')
+ax1, ax2 = axes[0]
+ax1r, ax2r = axes[1]
+
+# Upper‑left: D_M/r_d
+ax1.plot(z_dm, obs_dm, 'ko', label='DESI')
+ax1.plot(z_dm, pred_dm_feu, 'r-', linewidth=2, label='USF')
+ax1.plot(z_dm, pred_dm_lcdm, 'b--', linewidth=2, label='ΛCDM')
 ax1.set_ylabel('D$_M$/r$_d$')
 ax1.set_title('Transverse comoving distance')
 ax1.legend()
 ax1.grid(True, alpha=0.3)
 
-ax2.plot(z_dh, obs_dh, 'bo', label='DESI (D$_H$/r$_d$)')
-ax2.plot(z_dh, pred_dh, 'r-', linewidth=2, label='USF best-fit')
-ax2.set_xlabel('z')
+# Lower‑left: D_M residuals
+ax1r.axhline(y=0, color='black', linestyle='-', linewidth=0.8)
+ax1r.plot(z_dm, res_dm_lcdm, 'b--', linewidth=1.5, alpha=0.8, label='ΛCDM')
+ax1r.plot(z_dm, res_dm_usf, 'r-', linewidth=1.5, alpha=0.8, label='USF')
+ax1r.set_xlabel('z')
+ax1r.set_ylabel('Δ (%)')
+ax1r.legend(fontsize=8)
+ax1r.grid(True, alpha=0.3)
+
+# Upper‑right: D_H/r_d
+ax2.plot(z_dh, obs_dh, 'ko', label='DESI')
+ax2.plot(z_dh, pred_dh_feu, 'r-', linewidth=2, label='USF')
+ax2.plot(z_dh, pred_dh_lcdm, 'b--', linewidth=2, label='ΛCDM')
 ax2.set_ylabel('D$_H$/r$_d$')
 ax2.set_title('Hubble distance')
 ax2.legend()
 ax2.grid(True, alpha=0.3)
 
-plt.suptitle('BAO observables – USF vs DESI (real data)', fontsize=14)
+# Lower‑right: D_H residuals
+ax2r.axhline(y=0, color='black', linestyle='-', linewidth=0.8)
+ax2r.plot(z_dh, res_dh_lcdm, 'b--', linewidth=1.5, alpha=0.8, label='ΛCDM')
+ax2r.plot(z_dh, res_dh_usf, 'r-', linewidth=1.5, alpha=0.8, label='USF')
+ax2r.set_xlabel('z')
+ax2r.set_ylabel('Δ (%)')
+ax2r.legend(fontsize=8)
+ax2r.grid(True, alpha=0.3)
+
+plt.suptitle('BAO observables – USF and ΛCDM vs DESI (real data)', fontsize=14)
 plt.tight_layout()
 plt.savefig('results/BAO_observables_vs_DESI.pdf')
 plt.savefig('results/BAO_observables_vs_DESI.png', dpi=300)
@@ -165,28 +233,15 @@ print("="*60)
 print(f"{'Parameter':<20} {'ΛCDM':<20} {'USF':<20}")
 print("-"*60)
 
-lcdm_stats = lcdm.getMargeStats()
-lcdm_H0 = lcdm_stats.parWithName('H0')
-lcdm_Om = lcdm_stats.parWithName('Omega_m')
-
-feu_H0 = feu_stats.parWithName('H0')
-feu_Om = feu_stats.parWithName('Omega_m')
-feu_aq = feu_stats.parWithName('alpha_q')
-feu_zt = feu_stats.parWithName('z_trans')
-
-print(f"{'H0 [km/s/Mpc]':<20} {lcdm_H0.mean:.1f} ± {lcdm_H0.err:.1f}{'':>9} {feu_H0.mean:.1f} ± {feu_H0.err:.1f}")
-print(f"{'Omega_m':<20} {lcdm_Om.mean:.4f} ± {lcdm_Om.err:.4f}{'':>5} {feu_Om.mean:.4f} ± {feu_Om.err:.4f}")
-print(f"{'alpha_q':<20} {'0 (fixed)':<20} {feu_aq.mean:.4f} ± {feu_aq.err:.4f}")
-print(f"{'z_trans':<20} {'— (fixed)':<20} {feu_zt.mean:.2f} ± {feu_zt.err:.2f}")
+# Use the already existing lcdm_stats and feu_stats (do NOT redeclare them)
+print(f"{'H0 [km/s/Mpc]':<20} {lcdm_stats.parWithName('H0').mean:.1f} ± {lcdm_stats.parWithName('H0').err:.1f}{'':>9} {feu_stats.parWithName('H0').mean:.1f} ± {feu_stats.parWithName('H0').err:.1f}")
+print(f"{'Omega_m':<20} {lcdm_stats.parWithName('Omega_m').mean:.4f} ± {lcdm_stats.parWithName('Omega_m').err:.4f}{'':>5} {feu_stats.parWithName('Omega_m').mean:.4f} ± {feu_stats.parWithName('Omega_m').err:.4f}")
+print(f"{'alpha_q':<20} {'0 (fixed)':<20} {feu_stats.parWithName('alpha_q').mean:.4f} ± {feu_stats.parWithName('alpha_q').err:.4f}")
+print(f"{'z_trans':<20} {'— (fixed)':<20} {feu_stats.parWithName('z_trans').mean:.2f} ± {feu_stats.parWithName('z_trans').err:.2f}")
 
 def read_best_fit_chi2(chain_prefix):
-    """
-    Returns the best-fit chi2 = 2 * min(minuslogpost) from a Cobaya chain.
-    Assumes the chain file <chain_prefix>.1.txt with columns:
-    weight  minuslogpost  H0  Omega_m  alpha_q  z_trans  chi2__SN ...
-    """
     data = np.loadtxt(f"{chain_prefix}.1.txt")
-    min_logpost = np.min(data[:, 1])  # column 1 = minuslogpost
+    min_logpost = np.min(data[:, 1])
     return 2.0 * min_logpost
 
 chi2_feu  = read_best_fit_chi2("./chains/feu_bao_sn_sh0es")
