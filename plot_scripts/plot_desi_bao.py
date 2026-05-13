@@ -177,10 +177,21 @@ print(f"{'Omega_m':<20} {lcdm_Om.mean:.4f} ± {lcdm_Om.err:.4f}{'':>5} {feu_Om.m
 print(f"{'alpha_q':<20} {'0 (fixed)':<20} {feu_aq.mean:.4f} ± {feu_aq.err:.4f}")
 print(f"{'z_trans':<20} {'— (fixed)':<20} {feu_zt.mean:.2f} ± {feu_zt.err:.2f}")
 
-lcdm_chi = -2 * lcdm.getLikeStats().logMeanLike
-feu_chi  = -2 * feu.getLikeStats().logMeanLike
+def read_best_fit_chi2(chain_prefix):
+    """
+    Returns the best-fit chi2 = 2 * min(minuslogpost) from a Cobaya chain.
+    Assumes the chain file <chain_prefix>.1.txt with columns:
+    weight  minuslogpost  H0  Omega_m  alpha_q  z_trans  chi2__SN ...
+    """
+    data = np.loadtxt(f"{chain_prefix}.1.txt")
+    min_logpost = np.min(data[:, 1])  # column 1 = minuslogpost
+    return 2.0 * min_logpost
+
+chi2_feu  = read_best_fit_chi2("./chains/feu_bao_sn_sh0es")
+chi2_lcdm = read_best_fit_chi2("./chains/lcdm_bao_sn_sh0es")
+
 print("-"*60)
-print(f"{'χ² (approx.)':<20} {lcdm_chi:.2f}           {feu_chi:.2f}")
+print(f"{'χ² (best‑fit)':<20} {chi2_lcdm:.2f}           {chi2_feu:.2f}")
 
 plt.show()
 print("\nAll figures saved to results/.")
