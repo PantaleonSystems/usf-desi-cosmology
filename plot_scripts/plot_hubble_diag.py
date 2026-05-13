@@ -35,7 +35,7 @@ os.makedirs('results', exist_ok=True)
 # ============================================================
 # 1. Load USF chain and extract best-fit parameters
 # ============================================================
-feu = loadMCSamples('./chains/feu_bao_sn')
+feu = loadMCSamples('./chains/feu_bao_sn_sh0es')
 feu_stats = feu.getMargeStats()
 
 H0_feu = feu_stats.parWithName('H0').mean

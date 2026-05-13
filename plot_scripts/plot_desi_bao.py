@@ -41,8 +41,8 @@ os.makedirs('results', exist_ok=True)
 # ============================================================
 # 1. Load MCMC chains
 # ============================================================
-feu = loadMCSamples('./chains/feu_bao_sn')
-lcdm = loadMCSamples('./chains/lcdm_bao_sn')
+feu = loadMCSamples('./chains/feu_bao_sn_sh0es')
+lcdm = loadMCSamples('./chains/lcdm_bao_sn_sh0es')
 
 feu.name = 'FEU'
 lcdm.name = 'ΛCDM'

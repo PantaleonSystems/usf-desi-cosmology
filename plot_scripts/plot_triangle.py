@@ -31,7 +31,7 @@ os.makedirs('results', exist_ok=True)
 # ============================================================
 # 1. Load USF chain
 # ============================================================
-feu_samples = loadMCSamples('./chains/feu_bao_sn')
+feu_samples = loadMCSamples('./chains/feu_bao_sn_sh0es')
 feu_samples.name = 'FEU'
 
 # Increase bin resolution for smoother contours.
