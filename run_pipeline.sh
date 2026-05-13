@@ -31,11 +31,13 @@ for arg in "$@"; do
     esac
 done
 
-# ── Step 1: Clean ──────────────────────────────────────────────────────────────
-echo "==> Cleaning previous chains and results..."
-rm -f chains/feu_bao_sn_sh0es.* chains/lcdm_bao_sn_sh0es.*
-rm -f results/*.pdf
-echo "    Done."
+# ── Step 1: Clean (only when sampling or explicitly asked) ───────────────────────
+if [ "$SAMPLE" = true ] || [ "$CLEAN" = true ]; then
+    echo "==> Cleaning previous chains and results..."
+    rm -f chains/feu_bao_sn_sh0es.* chains/lcdm_bao_sn_sh0es.*
+    rm -f results/*.pdf
+    echo "    Done."
+fi
 
 if [ "$CLEAN" = true ]; then
     echo "Clean-only mode — exiting."
