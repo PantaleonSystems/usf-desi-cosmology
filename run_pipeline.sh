@@ -33,7 +33,7 @@ done
 
 # ── Step 1: Clean ──────────────────────────────────────────────────────────────
 echo "==> Cleaning previous chains and results..."
-rm -f chains/feu_bao_sn.* chains/lcdm_bao_sn.*
+rm -f chains/feu_bao_sn_sh0es.* chains/lcdm_bao_sn_sh0es.*
 rm -f results/*.pdf
 echo "    Done."
 
