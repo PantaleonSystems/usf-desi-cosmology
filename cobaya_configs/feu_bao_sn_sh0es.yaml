@@ -10,7 +10,7 @@ params:
     ref: 0.310
     proposal: 0.005
   alpha_q:
-    prior: { min: -0.05, max: 0.1 }
+    prior: { min: -0.3, max: 0.3 }
     ref: 0.015
     proposal: 0.002
   z_trans:
