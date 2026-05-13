@@ -121,16 +121,27 @@ class FEU(Theory):
         )
         return result
 
-    def get_angular_diameter_distance(self, z: float) -> float:
+    def get_angular_diameter_distance(self, z):
         """
         Angular diameter distance to redshift z.
 
         .. math:: D_A(z) = \\frac{D_C(z)}{1+z}
 
-        :param z: Target redshift.
-        :returns: Angular diameter distance in Mpc.
+        Accepts scalar or array z (Cobaya's sn.pantheonplus passes an array
+        of ~1701 SN redshifts via the provider system).
+
+        :param z: Target redshift(s) — float or array-like.
+        :returns: Angular diameter distance(s) in Mpc, same shape as input.
         """
-        return self.get_comoving_distance(z) / (1.0 + z)
+        z_arr = np.atleast_1d(np.asarray(z, dtype=np.float64))
+        d_c = np.array([
+            integrate.quad(
+                lambda zp: self._c_km_s / (self.H0 * self._E(zp)),
+                0.0, zi
+            )[0]
+            for zi in z_arr
+        ])
+        return d_c / (1.0 + z_arr)
 
     def get_r_s(self, z_drag: float = Z_DRAG) -> float:
         """
@@ -152,18 +163,22 @@ class FEU(Theory):
     def calculate(self, state: dict, want_derived: bool = True,
                   **params_values_dict) -> None:
         """
-        Provide the Hubble parameter at z=0 to satisfy Cobaya's requirements.
+        Store the current parameter values and populate the state dictionary.
 
-        This method is called by Cobaya to initialise the state dictionary
-        with any derived quantities.  For the USF model we only need to
-        ensure that the Hubble constant is correctly reported.
+        Cobaya passes sampled parameter values as kwargs each step.  We persist
+        them as instance attributes so that provider methods like
+        get_angular_diameter_distance (called after calculate returns) can use
+        self.H0 / self.Omega_m / self.alpha_q / self.z_trans normally.
 
         :param state: Cobaya state dictionary (modified in-place).
         :param want_derived: Whether derived parameters are requested.
         :param params_values_dict: Current parameter values.
         """
-        H0 = params_values_dict["H0"]
-        state["Hubble"] = {"z": np.array([0.0]), "H": np.array([H0])}
+        self.H0 = params_values_dict["H0"]
+        self.Omega_m = params_values_dict["Omega_m"]
+        self.alpha_q = params_values_dict["alpha_q"]
+        self.z_trans = params_values_dict["z_trans"]
+        state["Hubble"] = {"z": np.array([0.0]), "H": np.array([self.H0])}
 
     def get_requirements(self) -> dict:
         """
