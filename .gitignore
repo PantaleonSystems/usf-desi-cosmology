@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 /.claude
+/chains
 
 # C extensions
 *.so
