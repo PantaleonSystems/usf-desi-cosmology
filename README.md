@@ -234,17 +234,17 @@ config.dataset
 
 ---
 
-### 6.2 — DESI DR2 BAO (manual download)
+### 6.2 — DESI DR2 BAO (automatic via `cobaya-install`)
 
-The DESI DR2 data files are not part of the standard Cobaya package registry and must be downloaded manually from the official DESI data release.
+The DESI DR2 BAO data files are distributed through the official [CobayaSampler/bao_data](https://github.com/CobayaSampler/bao_data) repository on GitHub and can be installed automatically by Cobaya. Run the following command once from the repository root:
 
-**Target directory:**
-
-```
-cobaya_packages/data/bao_data/desi_bao_dr2/
+```bash
+cobaya-install bao.desi_2024_bao_all -p ./cobaya_packages
 ```
 
-**Required files** (from the DESI DR2 public release):
+Cobaya will fetch the mean vector and covariance matrix files from the `CobayaSampler/bao_data` registry and place them in `cobaya_packages/data/bao_data/`. An internet connection is required.
+
+**Files installed** (mean and covariance for each tracer bin):
 
 | File | Description |
 |---|---|
@@ -258,7 +258,7 @@ cobaya_packages/data/bao_data/desi_bao_dr2/
 | `desi_gaussian_bao_QSO_GCcomb_*.txt` | QSO tracer (z ≈ 1.49) |
 | `desi_gaussian_bao_Lya_GCcomb_*.txt` | Lyα forest (z ≈ 2.33) |
 
-Place all `*_mean.txt` and `*_cov.txt` files into `cobaya_packages/data/bao_data/desi_bao_dr2/`. The `BAODESILikelihood` class reads only `desi_gaussian_bao_ALL_GCcomb_mean.txt` and `desi_gaussian_bao_ALL_GCcomb_cov.txt` at runtime; the per-tracer files are provided for reference and cross-checks.
+The `BAODESILikelihood` class reads only `desi_gaussian_bao_ALL_GCcomb_mean.txt` and `desi_gaussian_bao_ALL_GCcomb_cov.txt` at runtime; the per-tracer files are available for reference and cross-checks.
 
 ---
 
