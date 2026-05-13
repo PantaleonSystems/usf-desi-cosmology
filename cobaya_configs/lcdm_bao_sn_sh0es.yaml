@@ -1,15 +1,12 @@
 packages_path: ./cobaya_packages
 
-# Flat-ΛCDM reference run using the same custom modules as the FEU run.
-# alpha_q is fixed to zero so the FEU background reduces exactly to ΛCDM.
-# No CAMB required — the comparison is apples-to-apples with the FEU chain.
-
 likelihood:
   theory_module.bao_desi_likelihood.BAODESILikelihood:
     python_path: .
     data_path: ./cobaya_packages/data/bao_data/desi_bao_dr2
-  sn.pantheonplus:
-    marginalize_calibration: false
+  sn.pantheonplus: null # Funciona perfeitamente e fará a marginalização nativa
+  theory_module.sh0es_likelihood.SH0ESLikelihood:
+    python_path: .
 
 params:
   H0:
@@ -21,13 +18,9 @@ params:
     ref: 0.315
     proposal: 0.005
   alpha_q:
-    value: 0.0
+    value: 0.0 # <--- Desliga a correção da USF, reduzindo ao ΛCDM puro
   z_trans:
-    value: 2.0
-  M:
-    prior: { min: -20, max: -18 }
-    ref: -19.2
-    proposal: 0.05
+    value: 2.0 # <--- Fixo, pois não tem efeito com alpha_q = 0
 
 theory:
   theory_module.feu_background.FEU:
