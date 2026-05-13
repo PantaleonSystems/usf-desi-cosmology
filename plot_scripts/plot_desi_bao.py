@@ -59,6 +59,7 @@ g.triangle_plot(
     title_fontsize=12
 )
 g.export('results/comparison_triangle.pdf')
+g.export('results/comparison_triangle.png')
 
 # ============================================================
 # 3. BAO observables D_M/r_d and D_H/r_d – real DESI data
@@ -153,6 +154,7 @@ ax2.grid(True, alpha=0.3)
 plt.suptitle('BAO observables – USF vs DESI (real data)', fontsize=14)
 plt.tight_layout()
 plt.savefig('results/BAO_observables_vs_DESI.pdf')
+plt.savefig('results/BAO_observables_vs_DESI.png', dpi=300)
 
 # ============================================================
 # 4. Parameter table (printed to terminal)

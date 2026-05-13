@@ -31,7 +31,9 @@ os.makedirs('results', exist_ok=True)
 # ============================================================
 # 1. Load USF chain
 # ============================================================
-feu_samples = loadMCSamples('./chains/feu_bao_sn_sh0es')
+# Load discarding the first 30% (burn-in phase):
+settings = {'ignore_rows': 0.3} # Discard the first 30% of steps
+feu_samples = loadMCSamples('./chains/feu_bao_sn_sh0es', settings=settings)
 feu_samples.name = 'FEU'
 
 # Increase bin resolution for smoother contours.
@@ -84,4 +86,5 @@ plt.xlabel('H_0 [km/s/Mpc]')
 plt.ylabel('Probability density')
 plt.title('H_0 posterior – USF model')
 plt.savefig('results/FEU_H0_posterior.pdf')
+plt.savefig('results/FEU_H0_posterior.png', dpi=300)
 plt.show()

@@ -101,6 +101,7 @@ plt.legend()
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.savefig('results/Hubble_diagram_real.pdf')
+plt.savefig('results/Hubble_diagram_real.png', dpi=300)
 plt.show()
 
 print("\nFigure saved to results/Hubble_diagram_real.pdf")
