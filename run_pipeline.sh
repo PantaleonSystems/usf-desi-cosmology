@@ -73,6 +73,10 @@ if [ "$PLOT" = true ]; then
     python plot_scripts/plot_hubble_diag.py
 
     echo ""
+    echo "==> Generating Omega USF plot..."
+    python plot_scripts/plot_omega_usf.py
+
+    echo ""
     echo "==> All figures saved to results/:"
     ls results/
 fi
