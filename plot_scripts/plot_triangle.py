@@ -14,8 +14,8 @@ Required data files:
     chains/feu_bao_sn/   – USF MCMC chains
 
 Output (saved to results/):
-    FEU_triangle_bao_sn_sh0es.pdf   – Corner plot (H0, Ω_m, α_q, z_trans)
-    FEU_H0_posterior.pdf            – H0 marginal posterior
+    Overlaid_triangle_USF_vs_LCDM.pdf – Corner plot (H0, Ω_m, α_q, z_trans)
+    Overlaid_triangle_USF_vs_LCDM.png – H0 marginal posterior
 
 Author: Pantaleon Systems
 Date: 2026
@@ -29,18 +29,22 @@ from getdist.mcsamples import loadMCSamples
 os.makedirs('results', exist_ok=True)
 
 # ============================================================
-# 1. Load USF chain
+# 1. Load both chains (with burn‑in)
 # ============================================================
-# Load discarding the first 30% (burn-in phase):
-settings = {'ignore_rows': 0.3} # Discard the first 30% of steps
-feu_samples = loadMCSamples('./chains/feu_bao_sn_sh0es', settings=settings)
-feu_samples.name = 'FEU'
+settings = {'ignore_rows': 0.3}   # discard first 30%
 
-# Increase bin resolution for smoother contours.
-feu_samples.updateSettings({'fine_bins': 2048, 'fine_bins_2D': 1024})
+samples_usf  = loadMCSamples('./chains/feu_bao_sn_sh0es', settings=settings)
+samples_lcdm = loadMCSamples('./chains/lcdm_bao_sn_sh0es', settings=settings)
+
+samples_usf.name  = 'USF'
+samples_lcdm.name = 'ΛCDM'
+
+# Increase bin resolution for smoother contours
+for s in (samples_usf, samples_lcdm):
+    s.updateSettings({'fine_bins': 2048, 'fine_bins_2D': 1024})
 
 # ============================================================
-# 2. Set LaTeX parameter labels
+# 2. Set LaTeX parameter labels (both chains share the same names)
 # ============================================================
 labels = {
     'H0':       'H_0',
@@ -50,41 +54,64 @@ labels = {
 }
 
 for name, label in labels.items():
-    param = feu_samples.getParamNames().parWithName(name)
-    if param is not None:
-        param.label = label
+    for s in (samples_usf, samples_lcdm):
+        param = s.getParamNames().parWithName(name)
+        if param is not None:
+            param.label = label
 
 # ============================================================
-# 3. Triangle plot
+# 3. Overlaid triangle plot
 # ============================================================
 g = plots.get_subplot_plotter()
+g.settings.legend_fontsize = 12
+
+# Pass both chains; GetDist automatically plots only the common parameters
+# for ΛCDM and the full set for USF.
 g.triangle_plot(
-    feu_samples,
+    [samples_lcdm, samples_usf],
     params=['H0', 'Omega_m', 'alpha_q', 'z_trans'],
     filled=True,
+    contour_colors=['#0072B2', '#D55E00'],    # blue for ΛCDM, red for USF
+    legend_labels=['ΛCDM', 'USF'],
+    markers={'H0': 73.04},                     # SH0ES reference line
     title_fontsize=14
 )
-g.export('results/FEU_triangle_bao_sn_sh0es.pdf')
+
+# Export the overlaid figure
+for ext in ('.pdf', '.png'):
+    g.export(f'results/Overlaid_triangle_USF_vs_LCDM{ext}',
+             dpi=300 if ext=='.png' else None)
 
 # ============================================================
 # 4. Parameter statistics (printed to terminal)
 # ============================================================
-stats = feu_samples.getMargeStats()
+stats_usf  = samples_usf.getMargeStats()
+stats_lcdm = samples_lcdm.getMargeStats()
 
-print(f"H0       = {stats.parWithName('H0').mean:.2f} ± {stats.parWithName('H0').err:.2f} km/s/Mpc")
-print(f"Omega_m  = {stats.parWithName('Omega_m').mean:.3f} ± {stats.parWithName('Omega_m').err:.3f}")
-print(f"alpha_q  = {stats.parWithName('alpha_q').mean:.4f} ± {stats.parWithName('alpha_q').err:.4f}")
-print(f"z_trans  = {stats.parWithName('z_trans').mean:.2f} ± {stats.parWithName('z_trans').err:.2f}")
+print("USF  : H0 = {:.2f} ± {:.2f}, Ω_m = {:.3f} ± {:.3f}, α_q = {:.4f} ± {:.4f}, z_trans = {:.2f} ± {:.2f}".format(
+    stats_usf.parWithName('H0').mean, stats_usf.parWithName('H0').err,
+    stats_usf.parWithName('Omega_m').mean, stats_usf.parWithName('Omega_m').err,
+    stats_usf.parWithName('alpha_q').mean, stats_usf.parWithName('alpha_q').err,
+    stats_usf.parWithName('z_trans').mean, stats_usf.parWithName('z_trans').err))
+
+print("ΛCDM : H0 = {:.2f} ± {:.2f}, Ω_m = {:.3f} ± {:.3f}".format(
+    stats_lcdm.parWithName('H0').mean, stats_lcdm.parWithName('H0').err,
+    stats_lcdm.parWithName('Omega_m').mean, stats_lcdm.parWithName('Omega_m').err))
 
 # ============================================================
-# 5. H0 posterior histogram
+# 5. H0 posterior histogram (USF only, kept for complement)
 # ============================================================
-h0_samples = feu_samples.samples[:, feu_samples.index['H0']]
+h0_usf = samples_usf.samples[:, samples_usf.index['H0']]
 plt.figure(figsize=(6, 4))
-plt.hist(h0_samples, bins=50, density=True, alpha=0.7, color='red')
+plt.hist(h0_usf, bins=50, density=True, alpha=0.7, color='#D55E00')
+plt.axvline(73.04, color='black', linestyle='--', linewidth=1.5, label='SH0ES')
 plt.xlabel('H_0 [km/s/Mpc]')
 plt.ylabel('Probability density')
 plt.title('H_0 posterior – USF model')
-plt.savefig('results/FEU_H0_posterior.pdf')
-plt.savefig('results/FEU_H0_posterior.png', dpi=300)
+plt.legend()
+plt.tight_layout()
+for ext in ('.pdf', '.png'):
+    plt.savefig(f'results/FEU_H0_posterior{ext}', dpi=300 if ext=='.png' else None)
 plt.show()
+
+print("\nAll figures saved to results/.")
