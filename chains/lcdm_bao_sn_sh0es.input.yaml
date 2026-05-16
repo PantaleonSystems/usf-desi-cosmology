@@ -1,0 +1,33 @@
+theory:
+  theory_module.feu_background.FEU:
+    python_path: .
+likelihood:
+  theory_module.bao_desi_likelihood.BAODESILikelihood:
+    python_path: .
+    data_path: ./cobaya_packages/data/bao_data/desi_bao_dr2
+  sn.pantheonplus: null
+  theory_module.sh0es_likelihood.SH0ESLikelihood:
+    python_path: .
+params:
+  H0:
+    prior:
+      min: 60
+      max: 80
+    ref: 68.0
+    proposal: 0.5
+  Omega_m:
+    prior:
+      min: 0.2
+      max: 0.4
+    ref: 0.315
+    proposal: 0.005
+  alpha_q:
+    value: 0.0
+  z_trans:
+    value: 2.0
+sampler:
+  mcmc:
+    Rminus1_stop: 0.01
+    max_tries: 10000
+packages_path: ./cobaya_packages
+output: lcdm_bao_sn_sh0es
