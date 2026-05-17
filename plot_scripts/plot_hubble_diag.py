@@ -128,7 +128,7 @@ ax1.plot(z_sn, mu_feu, 'r-', markersize=1.5, alpha=0.7, label='USF best‑fit')
 ax1.plot(z_sn, mu_lcdm, 'b-', markersize=0.8, alpha=0.5, label='ΛCDM best‑fit')
 ax1.set_ylabel('Distance modulus μ [mag]')
 ax1.set_title('Hubble diagram – USF and ΛCDM vs Pantheon+SH0ES')
-ax1.legend(markerscale=10, fontsize=9)
+ax1.legend(markerscale=1.5, fontsize=9)
 ax1.grid(True, alpha=0.2)
 
 # --- Lower panel: Residuals ---
@@ -139,7 +139,7 @@ ax2.errorbar(z_sn, res_feu, yerr=mu_err, fmt='.', color='red', alpha=0.6,
              label='USF residuals')
 ax2.set_xlabel('Redshift z')
 ax2.set_ylabel('Δμ [mag]')
-ax2.legend(markerscale=10, fontsize=9)
+ax2.legend(markerscale=1.5, fontsize=9)
 ax2.grid(True, alpha=0.2)
 
 plt.tight_layout()
