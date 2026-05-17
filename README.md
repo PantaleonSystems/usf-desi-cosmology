@@ -7,10 +7,20 @@
 [![Buchalter Prize 2026](https://img.shields.io/badge/submission-Buchalter%20Cosmology%20Prize%202026-purple.svg)]()
 
 > **Public code, MCMC chains, and Cobaya configuration files for the paper:**  
-> *"Unified State Function: A Quantum-Geometric Framework for Gravitation, Cosmology, and Particle Physics"*  
+> _"Unified State Function: A Quantum-Geometric Framework for Gravitation, Cosmology, and Particle Physics"_  
 > Submitted to the **Buchalter Cosmology Prize 2026**.
 
 This repository provides full reproducibility of the Bayesian MCMC analysis comparing the Standard Model (ΛCDM) against the Unified State Function (USF) framework, using a joint dataset of DESI DR2 BAO, Pantheon+, and SH0ES measurements.
+
+---
+
+<div align="center">
+
+<img src="results/FEU_H0_posterior.png" width="600" alt="H₀ posterior comparison: USF vs ΛCDM"/>
+
+_The USF framework shifts H₀ from **64.2 km/s/Mpc** (ΛCDM, orange) to **72.1 km/s/Mpc** (USF, blue) — fully consistent with local SH0ES measurements and resolving the Hubble tension with overwhelming statistical significance (ΔAIC = −64.4, α_q > 8σ)._
+
+</div>
 
 ---
 
@@ -36,10 +46,10 @@ This repository provides full reproducibility of the Bayesian MCMC analysis comp
 
 The **Hubble Tension** is one of the most significant open problems in modern cosmology: a persistent ~5σ discrepancy between two independent measurements of the present-day expansion rate of the universe:
 
-| Probe | H₀ (km/s/Mpc) | Method |
-|---|---|---|
-| CMB (Planck 2018, ΛCDM) | 67.4 ± 0.5 | Early-universe inference |
-| SH0ES (Riess et al. 2023) | 73.0 ± 1.04 | Local distance ladder |
+| Probe                     | H₀ (km/s/Mpc) | Method                   |
+| ------------------------- | ------------- | ------------------------ |
+| CMB (Planck 2018, ΛCDM)   | 67.4 ± 0.5    | Early-universe inference |
+| SH0ES (Riess et al. 2023) | 73.0 ± 1.04   | Local distance ladder    |
 
 Standard ΛCDM cannot reconcile these values without invoking modifications that are either ad hoc or poorly motivated theoretically.
 
@@ -57,13 +67,19 @@ $$\Omega_\text{USF}(z) = \frac{\alpha_q \cdot \sigma(z;\, z_\text{trans},\, \del
 
 and $\sigma$ is a logistic suppression function centred on the transition redshift $z_\text{trans}$ with fixed width $\delta = 0.25$. The flat-universe closure condition $\Omega_m + \Omega_r + \Omega_\Lambda + \Omega_\text{USF}(0) = 1$ is enforced exactly, guaranteeing $E(0) = 1$ by construction.
 
+<p align="center">
+  <img src="results/Omega_USF_evolution.png" width="560" alt="Redshift evolution of the USF geometric correction"/>
+  <br/>
+  <em>Redshift evolution of Ω<sub>USF</sub>(z) at the best-fit parameters. The correction peaks near z ≈ 4.6 — the transition epoch — and decays smoothly to zero at z → 0, preserving the flat-universe condition by construction.</em>
+</p>
+
 ### Model Parameters
 
-| Parameter | Symbol | Description |
-|---|---|---|
-| Hubble constant | H₀ | Present expansion rate (km/s/Mpc) |
-| Matter density | Ω_m | Present-day matter fraction |
-| Geometric amplitude | α_q | Amplitude of the quantum-geometric correction |
+| Parameter           | Symbol  | Description                                       |
+| ------------------- | ------- | ------------------------------------------------- |
+| Hubble constant     | H₀      | Present expansion rate (km/s/Mpc)                 |
+| Matter density      | Ω_m     | Present-day matter fraction                       |
+| Geometric amplitude | α_q     | Amplitude of the quantum-geometric correction     |
 | Transition redshift | z_trans | Redshift at the onset of the geometric correction |
 
 The ΛCDM control model is recovered exactly by fixing α_q = 0.
@@ -72,22 +88,40 @@ The ΛCDM control model is recovered exactly by fixing α_q = 0.
 
 ## 2. Key Results
 
-| Observable | USF | ΛCDM |
-|---|---|---|
-| H₀ (km/s/Mpc) | **72.1 ± 1.0** | 64.2 ± 0.4 |
-| Ω_m | **0.373 ± 0.012** | 0.3059 ± 0.0084 |
-| α_q | **−0.100 ± 0.012** | — (fixed to 0) |
-| z_trans | **4.66 ± 0.33** | — (fixed) |
+| Observable    | USF                | ΛCDM            |
+| ------------- | ------------------ | --------------- |
+| H₀ (km/s/Mpc) | **72.1 ± 1.0**     | 64.2 ± 0.4      |
+| Ω_m           | **0.373 ± 0.012**  | 0.3059 ± 0.0084 |
+| α_q           | **−0.100 ± 0.012** | — (fixed to 0)  |
+| z_trans       | **4.66 ± 0.33**    | — (fixed)       |
 
 **Statistical comparison:**
 
-| Metric | Value | Interpretation |
-|---|---|---|
-| ΔAIC (USF − ΛCDM) | **−64.4** | Decisive statistical preference over ΛCDM |
-| α_q significance | **> 8σ** | Geometric correction detected with overwhelming significance |
-| Hubble Tension | **Resolved** | USF H₀ consistent with SH0ES |
+| Metric            | Value        | Interpretation                                               |
+| ----------------- | ------------ | ------------------------------------------------------------ |
+| ΔAIC (USF − ΛCDM) | **−64.4**    | Decisive statistical preference over ΛCDM                    |
+| α_q significance  | **> 8σ**     | Geometric correction detected with overwhelming significance |
+| Hubble Tension    | **Resolved** | USF H₀ consistent with SH0ES                                 |
 
 The USF model resolves the Hubble Tension without introducing dark energy as an ad hoc field, instead attributing the effective H₀ shift to an intermediate-redshift geometric screening that acts as a cosmic brake at z ≈ 4.66.
+
+<p align="center">
+  <img src="results/Overlaid_triangle_USF_vs_LCDM.png" width="740" alt="Full joint posterior triangle plot: USF vs LCDM"/>
+  <br/>
+  <em><strong>Figure 1 — Parameter posteriors.</strong> Joint and marginalised distributions for all sampled parameters. USF (blue) vs. ΛCDM (orange). The geometric amplitude α<sub>q</sub> is detected at > 8σ; H₀ shifts to full consistency with the SH0ES local distance ladder.</em>
+</p>
+
+<p align="center">
+  <img src="results/BAO_observables_vs_DESI.png" width="740" alt="BAO distance ratios vs DESI DR2 data"/>
+  <br/>
+  <em><strong>Figure 2 — BAO distance ratios.</strong> Predicted D<sub>M</sub>/r<sub>d</sub>, D<sub>H</sub>/r<sub>d</sub>, and D<sub>V</sub>/r<sub>d</sub> from USF (blue) and ΛCDM (orange) compared against the seven DESI DR2 tracer bins. Both models fit the BAO data well; the statistical advantage of USF comes from its resolution of the H₀ tension via the SH0ES likelihood.</em>
+</p>
+
+<p align="center">
+  <img src="results/Hubble_diagram_residuals.png" width="740" alt="H(z) Hubble diagram with residuals"/>
+  <br/>
+  <em><strong>Figure 3 — Hubble diagram.</strong> H(z) curves for USF and ΛCDM against observational data, with percentage residuals in the lower panel. The USF geometric screening is most prominent near the transition redshift z ≈ 4.6.</em>
+</p>
 
 ---
 
@@ -100,7 +134,7 @@ The MCMC chains are conditioned on three complementary observational datasets:
 The Dark Energy Spectroscopic Instrument Data Release 1 (2024) provides BAO measurements across seven effective redshift bins. The likelihood evaluates three geometric observables:
 
 - **D_M / r_d** — transverse comoving distance ratio
-- **D_H / r_d** — Hubble distance ratio  
+- **D_H / r_d** — Hubble distance ratio
 - **D_V / r_d** — angle-averaged distance ratio
 
 The full covariance matrix is read directly from the official DESI release files (`desi_gaussian_bao_ALL_GCcomb_mean.txt` and `desi_gaussian_bao_ALL_GCcomb_cov.txt`).
@@ -193,13 +227,13 @@ pip install -r requirements.txt
 
 The `requirements.txt` pins all dependency versions for full reproducibility. The key packages are:
 
-| Package | Version | Role |
-|---|---|---|
-| `cobaya` | 3.6.2 | MCMC sampler and theory framework |
-| `getdist` | 1.7.7 | Posterior analysis and plotting |
-| `numpy` | 2.4.4 | Numerical arrays |
-| `scipy` | 1.17.1 | Numerical integration (`quad`) |
-| `matplotlib` | 3.10.9 | Figure rendering |
+| Package      | Version | Role                              |
+| ------------ | ------- | --------------------------------- |
+| `cobaya`     | 3.6.2   | MCMC sampler and theory framework |
+| `getdist`    | 1.7.7   | Posterior analysis and plotting   |
+| `numpy`      | 2.4.4   | Numerical arrays                  |
+| `scipy`      | 1.17.1  | Numerical integration (`quad`)    |
+| `matplotlib` | 3.10.9  | Figure rendering                  |
 
 ---
 
@@ -245,17 +279,17 @@ Cobaya will fetch the mean vector and covariance matrix files from the `CobayaSa
 
 **Files installed** (mean and covariance for each tracer bin):
 
-| File | Description |
-|---|---|
-| `desi_gaussian_bao_ALL_GCcomb_mean.txt` | Combined BAO mean vector (all tracers) |
-| `desi_gaussian_bao_ALL_GCcomb_cov.txt` | Full covariance matrix |
-| `desi_gaussian_bao_BGS_BRIGHT-21.35_GCcomb_*.txt` | BGS tracer (z ≈ 0.30) |
-| `desi_gaussian_bao_LRG_GCcomb_z0.4-0.6_*.txt` | LRG bin 1 (z ≈ 0.51) |
-| `desi_gaussian_bao_LRG_GCcomb_z0.6-0.8_*.txt` | LRG bin 2 (z ≈ 0.71) |
-| `desi_gaussian_bao_LRG+ELG_LOPnotqso_GCcomb_*.txt` | LRG+ELG overlap bin |
-| `desi_gaussian_bao_ELG_LOPnotqso_GCcomb_z1.1-1.6_*.txt` | ELG tracer |
-| `desi_gaussian_bao_QSO_GCcomb_*.txt` | QSO tracer (z ≈ 1.49) |
-| `desi_gaussian_bao_Lya_GCcomb_*.txt` | Lyα forest (z ≈ 2.33) |
+| File                                                    | Description                            |
+| ------------------------------------------------------- | -------------------------------------- |
+| `desi_gaussian_bao_ALL_GCcomb_mean.txt`                 | Combined BAO mean vector (all tracers) |
+| `desi_gaussian_bao_ALL_GCcomb_cov.txt`                  | Full covariance matrix                 |
+| `desi_gaussian_bao_BGS_BRIGHT-21.35_GCcomb_*.txt`       | BGS tracer (z ≈ 0.30)                  |
+| `desi_gaussian_bao_LRG_GCcomb_z0.4-0.6_*.txt`           | LRG bin 1 (z ≈ 0.51)                   |
+| `desi_gaussian_bao_LRG_GCcomb_z0.6-0.8_*.txt`           | LRG bin 2 (z ≈ 0.71)                   |
+| `desi_gaussian_bao_LRG+ELG_LOPnotqso_GCcomb_*.txt`      | LRG+ELG overlap bin                    |
+| `desi_gaussian_bao_ELG_LOPnotqso_GCcomb_z1.1-1.6_*.txt` | ELG tracer                             |
+| `desi_gaussian_bao_QSO_GCcomb_*.txt`                    | QSO tracer (z ≈ 1.49)                  |
+| `desi_gaussian_bao_Lya_GCcomb_*.txt`                    | Lyα forest (z ≈ 2.33)                  |
 
 The `BAODESILikelihood` class reads only `desi_gaussian_bao_ALL_GCcomb_mean.txt` and `desi_gaussian_bao_ALL_GCcomb_cov.txt` at runtime; the per-tracer files are available for reference and cross-checks.
 
@@ -320,7 +354,7 @@ This step is mandatory before restarting a run. Cobaya's Metropolis–Hastings s
 cobaya-run cobaya_configs/feu_bao_sn_sh0es.yaml
 ```
 
-The sampler runs until the Gelman–Rubin convergence criterion R−1 < 0.01 is satisfied across all four free parameters. The dominant cost is the per-step inversion of the Pantheon+ 1701 × 1701 covariance matrix. **Expected wall time: 2–6 hours** on a modern laptop CPU.
+The sampler runs until the Gelman–Rubin convergence criterion R−1 < 0.01 is satisfied across all four free parameters. The dominant cost is the per-step inversion of the Pantheon+ 1701 × 1701 covariance matrix.
 
 Chain files are written incrementally to `chains/feu_bao_sn_sh0es.*`.
 
@@ -376,10 +410,10 @@ results/
 
 ## 9. Authors & Contact
 
-| Name | Affiliation | Contact |
-|---|---|---|
+| Name                                | Affiliation                                                           | Contact                                                                                                                                                                               |
+| ----------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Efrain Marcelo Pulgar Pantaleon** | Graduate Program in Electrical Engineering and Computer Science, UFRN | [![GitHub](https://img.shields.io/badge/GitHub-efrainmpp1-181717?logo=github)](https://github.com/efrainmpp1) · [efrain.pulgar.110@ufrn.edu.br](mailto:efrain.pulgar.110@ufrn.edu.br) |
-| **Efrain Pantaleon Matamoros** | School of Science and Technology, UFRN | [efrain.pantaleon@ufrn.br](mailto:efrain.pantaleon@ufrn.edu.br) |
+| **Efrain Pantaleon Matamoros**      | School of Science and Technology, UFRN                                | [efrain.pantaleon@ufrn.br](mailto:efrain.pantaleon@ufrn.edu.br)                                                                                                                       |
 
 For questions, reproducibility issues, or collaboration proposals, please open a [GitHub Issue](../../issues) or contact the authors directly.
 
@@ -403,12 +437,12 @@ If you use this code or the results of this analysis in your research, please ci
 
 The analysis builds on the following foundational works:
 
-- **Cobaya**: Torrado & Lewis (2021), *JCAP* 05, 057. [arXiv:2005.05290](https://arxiv.org/abs/2005.05290)
+- **Cobaya**: Torrado & Lewis (2021), _JCAP_ 05, 057. [arXiv:2005.05290](https://arxiv.org/abs/2005.05290)
 - **GetDist**: Lewis (2019). [arXiv:1910.13970](https://arxiv.org/abs/1910.13970)
 - **DESI DR2 BAO**: DESI Collaboration (2025). [arXiv:2503.14738](https://arxiv.org/abs/2503.14738)
-- **Pantheon+**: Scolnic et al. (2022), *ApJ* 938, 113. [arXiv:2112.03863](https://arxiv.org/abs/2112.03863)
-- **SH0ES**: Riess et al. (2022), *ApJL* 934, L7. [arXiv:2112.04510](https://arxiv.org/abs/2112.04510)
-- **Planck 2018**: Planck Collaboration (2020), *A&A* 641, A6. [arXiv:1807.06209](https://arxiv.org/abs/1807.06209)
+- **Pantheon+**: Scolnic et al. (2022), _ApJ_ 938, 113. [arXiv:2112.03863](https://arxiv.org/abs/2112.03863)
+- **SH0ES**: Riess et al. (2022), _ApJL_ 934, L7. [arXiv:2112.04510](https://arxiv.org/abs/2112.04510)
+- **Planck 2018**: Planck Collaboration (2020), _A&A_ 641, A6. [arXiv:1807.06209](https://arxiv.org/abs/1807.06209)
 
 ---
 
@@ -418,4 +452,4 @@ This project is released under the [MIT License](LICENSE). You are free to use, 
 
 ---
 
-*This repository ensures full reproducibility of the MCMC analysis in accordance with the open-science standards of the astronomical community. All parameter priors, convergence criteria, dataset versions, and software dependencies are pinned and documented here.*
+_This repository ensures full reproducibility of the MCMC analysis in accordance with the open-science standards of the astronomical community. All parameter priors, convergence criteria, dataset versions, and software dependencies are pinned and documented here._
