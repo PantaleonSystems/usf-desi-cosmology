@@ -4,7 +4,6 @@
 [![Cobaya 3.6](https://img.shields.io/badge/cobaya-3.6.2-orange.svg)](https://cobaya.readthedocs.io/)
 [![GetDist 1.7](https://img.shields.io/badge/getdist-1.7.7-green.svg)](https://getdist.readthedocs.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status: Ready for Publication](https://img.shields.io/badge/status-ready%20for%20publication-brightgreen.svg)]()
 [![Buchalter Prize 2026](https://img.shields.io/badge/submission-Buchalter%20Cosmology%20Prize%202026-purple.svg)]()
 
 > **Public code, MCMC chains, and Cobaya configuration files for the paper:**  
