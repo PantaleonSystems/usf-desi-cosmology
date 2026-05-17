@@ -75,20 +75,20 @@ The ΛCDM control model is recovered exactly by fixing α_q = 0.
 
 | Observable | USF | ΛCDM |
 |---|---|---|
-| H₀ (km/s/Mpc) | **72.8 ± 0.9** | 68.3 ± 0.6 |
-| Ω_m | 0.305 ± 0.012 | 0.312 ± 0.010 |
-| α_q | **0.015 ± 0.003** | — (fixed to 0) |
-| z_trans | 1.8 ± 0.3 | — (fixed) |
+| H₀ (km/s/Mpc) | **72.1 ± 1.0** | 64.2 ± 0.4 |
+| Ω_m | **0.373 ± 0.012** | 0.3059 ± 0.0084 |
+| α_q | **−0.100 ± 0.012** | — (fixed to 0) |
+| z_trans | **4.66 ± 0.33** | — (fixed) |
 
 **Statistical comparison:**
 
 | Metric | Value | Interpretation |
 |---|---|---|
-| ΔAIC (USF − ΛCDM) | **−3.0** | Positive evidence in favour of USF |
-| α_q significance | **> 5σ** | Geometric correction detected |
+| ΔAIC (USF − ΛCDM) | **−64.4** | Decisive statistical preference over ΛCDM |
+| α_q significance | **> 8σ** | Geometric correction detected with overwhelming significance |
 | Hubble Tension | **Resolved** | USF H₀ consistent with SH0ES |
 
-The USF model resolves the Hubble Tension without introducing dark energy as an ad hoc field, instead attributing the effective H₀ shift to the quantum-geometric correction becoming active at z ≈ 1.8.
+The USF model resolves the Hubble Tension without introducing dark energy as an ad hoc field, instead attributing the effective H₀ shift to an intermediate-redshift geometric screening that acts as a cosmic brake at z ≈ 4.66.
 
 ---
 
@@ -98,7 +98,7 @@ The MCMC chains are conditioned on three complementary observational datasets:
 
 ### DESI DR2 — Baryon Acoustic Oscillations
 
-The Dark Energy Spectroscopic Instrument Data Release 2 provides BAO measurements across seven effective redshift bins. The likelihood evaluates three geometric observables:
+The Dark Energy Spectroscopic Instrument Data Release 1 (2024) provides BAO measurements across seven effective redshift bins. The likelihood evaluates three geometric observables:
 
 - **D_M / r_d** — transverse comoving distance ratio
 - **D_H / r_d** — Hubble distance ratio  
@@ -242,7 +242,7 @@ The DESI DR2 BAO data files are distributed through the official [CobayaSampler/
 cobaya-install bao.desi_2024_bao_all -p ./cobaya_packages
 ```
 
-Cobaya will fetch the mean vector and covariance matrix files from the `CobayaSampler/bao_data` registry and place them in `cobaya_packages/data/bao_data/`. An internet connection is required.
+Cobaya will fetch the mean vector and covariance matrix files from the `CobayaSampler/bao_data` registry and place them in `cobaya_packages/data/bao_data/desi_bao_dr2/`. An internet connection is required.
 
 **Files installed** (mean and covariance for each tracer bin):
 
