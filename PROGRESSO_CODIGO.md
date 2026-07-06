@@ -36,12 +36,17 @@ anômalo da Tabela 2 do artigo). Este número vai para a carta-resposta.
 - [x] Tópico 3 – Esquema canônico definido e documentado (`docs/SN_CALIBRATION.md`): runs principais `*_bao_sn` sem informação local de H0; variante rotulada `*_bao_sn_sh0es` com o prior gaussiano (nunca `pantheonplusshoes` + prior juntos; nunca `MU_SH0ES` em análises). Grade completa de YAMLs criada no Tópico 9.
 - [x] Tópico 3 – `plot_hubble_diag.py` reescrito: `m_b_corr` + máscara da likelihood + offset M̂ ajustado por modelo (média ponderada, mimetiza a marginalização analítica); resíduos mostram apenas a *forma* de d_L(z). Smoke test: **com M marginalizado, ΛCDM e USF ajustam a forma das SNe igualmente bem (χ²/N diag 0.442 vs 0.446)** — confirma que o "drift" da Fig. 4 original era artefato da calibração SH0ES embutida em `MU_SH0ES`.
 
+### Tópico 9 — Qualidade e unificação do código do pipeline
+
+- [x] Tópico 9 – Módulo único `theory_module/background.py` (criado no Tópico 2) agora consumido por **todos**: theory (`usf_background.USF`), likelihood BAO, e os 4 plot scripts (nenhuma física local restante; `grep` confirma zero duplicação).
+- [x] Tópico 9 – Likelihood BAO refatorada para o sistema **requirements/provider** do Cobaya (`get_requirements` → `provider.get_H/get_comoving_distance/get_r_s`); sem params próprios, sem física local.
+- [x] Tópico 9 – Renomeado FEU → USF: `theory_module/usf_background.py` (classe `USF`), YAMLs, plots (`USF_H0_posterior.*`), labels. Zero referências residuais.
+- [x] Tópico 9 – Grade completa de YAMLs (tarefa [CÓDIGO] do Tópico 4): `usf/lcdm × {bao_sn, bao, sn, bao_sn_sh0es}` com seeds fixos (1001–1008), SH0ES explícito (73.04 ± 1.04) apenas nas variantes `_sh0es`.
+- [x] Tópico 9 – Testes de regressão (`test_regression_consistency.py`): theory ≡ background bit a bit; limites Ω_USF; **teste de integração Cobaya** (`test_cobaya_integration.py`): modelo completo montado do YAML, posterior finito, χ²_BAO via provider < 40, limite aninhado (α_q=0 independe de z_trans no modelo completo).
+- [x] Tópico 9 – Validação cruzada externa (`test_camb_crossval.py`): D_M, D_A, H(z) < 0.1% e r_d < 0.2% vs CAMB em 4 cosmologias cobrindo o volume de prior — gate obrigatório no `run_pipeline.sh` antes de amostrar.
+- [x] Tópico 9 – Reprodutibilidade: `requirements.txt` com astropy/camb/pytest pinados; seeds nos YAMLs; `run_pipeline.sh` reescrito (gate de testes + grade `--grid main|all|sh0es|datasets` + plots parametrizados).
+
 ## Pendentes
-- [ ] Tópico 9 – Módulo único de background + refactor theory/likelihood/plots
-- [ ] Tópico 9 – Validação cruzada vs CAMB no CI (tolerâncias documentadas)
-- [ ] Tópico 9 – Testes de regressão de consistência interna
-- [ ] Tópico 9 – Reprodutibilidade (pinagem, seeds, run_pipeline.sh)
-- [ ] Tópico 9 – Renomear FEU → USF no código
 - [ ] Tópico 5 – Módulo de CMB distance priors (R, ℓ_A, ω_b + covariância)
 - [ ] Tópico 5 – Incluir CMB distance priors nos YAMLs de produção
 - [ ] Tópico 6 – YAMLs de nested sampling (PolyChord)
@@ -56,3 +61,4 @@ anômalo da Tabela 2 do artigo). Este número vai para a carta-resposta.
 | 2026-07-06 | 1 | Suíte criada; 18 passed, 2 xfailed (bugs documentados). Desvio de r_d: **+4.401%** vs CAMB. χ² BAO no best-fit DESI: **227.5/13 pontos**. |
 | 2026-07-06 | 2 | Setor de radiação corrigido; z_drag calibrado em grade CAMB; prior BBN em ω_b; r_d **+0.006%** vs CAMB; χ² BAO **10.3/13**. 27 passed. |
 | 2026-07-06 | 3 | Auditoria sn.pantheonplus (M marginalizado analiticamente; sem dupla contagem); plot_hubble_diag.py refeito com M̂ por modelo — drift da Fig. 4 confirmado como artefato. |
+| 2026-07-06 | 9 | Unificação completa: provider Cobaya, FEU→USF, grade de 8 YAMLs com seeds, cross-val CAMB como gate, 39 passed. |

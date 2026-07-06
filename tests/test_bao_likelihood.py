@@ -14,7 +14,7 @@ This test now guards the fix.
 import numpy as np
 import pytest
 
-from tests.helpers import make_bao_likelihood
+from tests.helpers import make_bao_likelihood, make_theory
 
 # DESI DR2 (Abdul Karim et al. 2025) flat ΛCDM, BAO(+BBN):
 DESI_OMEGA_M = 0.2975
@@ -23,7 +23,9 @@ DESI_H0 = 68.5
 
 @pytest.fixture(scope="module")
 def bao_like():
-    return make_bao_likelihood()
+    theory = make_theory(DESI_H0, DESI_OMEGA_M, alpha_q=0.0,
+                         z_trans=2.0, omega_b=0.02218)
+    return make_bao_likelihood(theory)
 
 
 def test_data_vector_loaded(bao_like):
@@ -34,10 +36,7 @@ def test_data_vector_loaded(bao_like):
 
 
 def test_chi2_at_desi_bestfit(bao_like):
-    logp = bao_like.logp(
-        H0=DESI_H0, Omega_m=DESI_OMEGA_M, omega_b=0.02218,
-        alpha_q=0.0, z_trans=2.0
-    )
+    logp = bao_like.logp()
     chi2 = -2.0 * logp
     ndata = len(bao_like.z_eff)
     print(f"\n[BAO audit] chi² at DESI DR2 best fit = {chi2:.2f} for {ndata} points")

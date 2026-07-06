@@ -34,6 +34,7 @@ Author: Pantaleon Systems
 Date: 2026
 """
 
+import argparse
 import os
 import sys
 
@@ -49,11 +50,16 @@ os.makedirs('results', exist_ok=True)
 
 Z_CUT = 0.01  # same mask as cobaya's sn.pantheonplus
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--usf-chain', default='./chains/usf_bao_sn_sh0es')
+parser.add_argument('--lcdm-chain', default='./chains/lcdm_bao_sn_sh0es')
+args = parser.parse_args()
+
 # ============================================================
 # 1. Load MCMC chains and extract mean parameters
 # ============================================================
-feu = loadMCSamples('./chains/feu_bao_sn_sh0es')
-lcdm = loadMCSamples('./chains/lcdm_bao_sn_sh0es')
+feu = loadMCSamples(args.usf_chain)
+lcdm = loadMCSamples(args.lcdm_chain)
 
 feu_stats = feu.getMargeStats()
 H0_feu = feu_stats.parWithName('H0').mean

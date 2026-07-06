@@ -7,7 +7,10 @@ parameters: α_q and z_trans.
 
 All physics is delegated to :mod:`theory_module.background` (single source of
 truth shared with the likelihoods, the plot scripts and the test suite —
-Topic 9 of pdfs/PLANO_CORRECAO_REFEREE1.md).
+Topic 9 of pdfs/PLANO_CORRECAO_REFEREE1.md).  This class acts as a Cobaya
+*provider*: its ``get_*`` methods are auto-discovered and serve both the
+built-in SN likelihoods (angular_diameter_distance) and the custom BAO / CMB
+distance-prior likelihoods (H, comoving_distance, r_s, sound scales).
 
 Sampled parameters: H0, Omega_m (total matter), omega_b (= Ω_b h², with a BBN
 Gaussian prior set in the YAML), alpha_q and z_trans.  The physical radiation
@@ -16,7 +19,7 @@ density is held fixed (ω_r = ω_γ(1 + 0.2271 N_eff), N_eff = 3.044); Σm_ν =
 
 Usage (Cobaya YAML):
     theory:
-        theory_module.feu_background.FEU:
+        theory_module.usf_background.USF:
 
 Author: Pantaleon Systems
 Date: 2026
@@ -29,7 +32,7 @@ from theory_module import background as bg
 from usf_constants import DELTA
 
 
-class FEU(Theory):
+class USF(Theory):
     """USF effective geometric model for cosmic expansion.
 
     Extra parameters on top of flat ΛCDM:
@@ -52,11 +55,11 @@ class FEU(Theory):
     _delta: float = DELTA
 
     def initialize(self) -> None:
-        """One-time setup (warm the z_drag interpolation table)."""
+        """One-time setup (warm the z_drag/z_star interpolation tables)."""
         bg.z_drag(0.02218, 0.14)
 
     # ------------------------------------------------------------------
-    # Public interface expected by Cobaya likelihoods
+    # Provider methods (auto-discovered by Cobaya's requirements system)
     # ------------------------------------------------------------------
 
     def get_H(self, z):
@@ -77,15 +80,27 @@ class FEU(Theory):
         """Sound horizon at the drag epoch r_d [Mpc].
 
         Computed from the physical densities (ω_b sampled, ω_m = Ω_m h²)
-        with the CAMB-calibrated drag redshift — independent of the USF
-        late-time term by construction.
+        with the CAMB-calibrated drag redshift — independent of H0 and of
+        the USF late-time term by construction.
         """
-        omega_m = self.Omega_m * (self.H0 / 100.0) ** 2
-        return bg.r_drag(self.omega_b, omega_m)
+        return bg.r_drag(self.omega_b, self._omega_m_h2())
+
+    def get_rs_zstar(self):
+        """Sound horizon at recombination r_s(z*) [Mpc] (CMB priors)."""
+        omega_m = self._omega_m_h2()
+        return bg.sound_horizon(bg.z_star(self.omega_b, omega_m),
+                                self.omega_b, omega_m)
+
+    def get_z_star(self):
+        """Recombination redshift z*(ω_b, ω_m) (CAMB-calibrated)."""
+        return bg.z_star(self.omega_b, self._omega_m_h2())
 
     # ------------------------------------------------------------------
     # Cobaya internal methods
     # ------------------------------------------------------------------
+
+    def _omega_m_h2(self):
+        return self.Omega_m * (self.H0 / 100.0) ** 2
 
     def calculate(self, state: dict, want_derived: bool = True,
                   **params_values_dict) -> None:

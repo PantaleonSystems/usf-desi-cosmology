@@ -1,0 +1,38 @@
+# Gerado no Tópico 9 do plano de correção (grade de runs do Tópico 4).
+# Esquema de calibração: docs/SN_CALIBRATION.md. Seed fixo p/ reprodutibilidade.
+packages_path: ./cobaya_packages
+
+params:
+  H0:
+    prior: { min: 60, max: 80 }
+    ref: 68.0
+    proposal: 0.5
+    latex: H_0
+  Omega_m:
+    prior: { min: 0.2, max: 0.4 }
+    ref: 0.310
+    proposal: 0.005
+    latex: \Omega_m
+  omega_b: # Ω_b h² com prior gaussiano de BBN (Schöneberg 2024)
+    prior: { dist: norm, loc: 0.02218, scale: 0.00055 }
+    ref: 0.02218
+    proposal: 0.0003
+    latex: \omega_b
+  alpha_q:
+    value: 0.0 # desliga a correção USF (limite ΛCDM exato)
+  z_trans:
+    value: 2.0 # sem efeito quando alpha_q = 0
+
+theory:
+  theory_module.usf_background.USF:
+    python_path: .
+
+likelihood:
+  sn.pantheonplus: null # M marginalizado analiticamente (docs/SN_CALIBRATION.md)
+
+output: chains/lcdm_sn
+sampler:
+  mcmc:
+    Rminus1_stop: 0.01
+    max_tries: 10000
+    seed: 1008

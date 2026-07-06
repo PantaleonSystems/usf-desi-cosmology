@@ -1,103 +1,83 @@
 """
 Evolution of the effective geometric correction Ω_USF(z).
 
-This script plots the best‑fit USF correction term as a function of
-redshift, together with the ΛCDM asymptotic limit and the location
-of the transition epoch.  The figure illustrates the three physical
-regimes discussed in the paper:
-    – primordial suppression (Ω_USF → 0 for z ≫ z_trans),
-    – a negative dip near the transition (the “primordial brake”),
-    – convergence to a small constant value at low redshift.
+Plots the best-fit USF correction term as a function of redshift, together
+with the ΛCDM asymptotic limit and the transition epoch.  The Ω_USF(z)
+function is imported from theory_module.background — the exact expression
+used by the sampler (Topic 9 of the correction plan).
 
-Usage:
-    Run from the repository root:
-        python plot_scripts/plot_omega_usf.py
+Best-fit parameters are read from the USF chain when available; otherwise
+the values passed on the command line are used.
+
+Usage (from the repository root):
+    python plot_scripts/plot_omega_usf.py [--chain chains/usf_bao_sn_sh0es]
+        [--alpha-q -0.1] [--z-trans 4.66]
 
 Output (saved to results/):
-    Omega_USF_evolution.pdf
-    Omega_USF_evolution.png
+    Omega_USF_evolution.pdf / .png
 
 Author: Pantaleon Systems
 Date: 2026
 """
 
+import argparse
 import os
 import sys
-import numpy as np
-import matplotlib.pyplot as plt
 
-# Ensure project root is on sys.path so usf_constants can be imported
+import matplotlib.pyplot as plt
+import numpy as np
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-from usf_constants import DELTA
+from theory_module import background as bg  # noqa: E402
+from usf_constants import DELTA  # noqa: E402
 
 os.makedirs('results', exist_ok=True)
 
-# ============================================================
-# Best‑fit parameters from the USF MCMC chain
-# (mean marginalised values, as reported by plot_triangle.py)
-# ============================================================
-ALPHA_Q  = -0.1001
-Z_TRANS  = 4.66
-DELTA    = DELTA   # 0.25
+parser = argparse.ArgumentParser()
+parser.add_argument('--chain', default='./chains/usf_bao_sn_sh0es')
+parser.add_argument('--alpha-q', type=float, default=None)
+parser.add_argument('--z-trans', type=float, default=None)
+args = parser.parse_args()
+
+alpha_q, z_trans = args.alpha_q, args.z_trans
+if alpha_q is None or z_trans is None:
+    try:
+        from getdist.mcsamples import loadMCSamples
+        stats = loadMCSamples(args.chain).getMargeStats()
+        alpha_q = stats.parWithName('alpha_q').mean
+        z_trans = stats.parWithName('z_trans').mean
+        print(f"Chain means: alpha_q = {alpha_q:.4f}, z_trans = {z_trans:.2f}")
+    except Exception as exc:  # chain absent: require explicit values
+        raise SystemExit(
+            f"Could not read chain '{args.chain}' ({exc}); "
+            "pass --alpha-q and --z-trans explicitly."
+        )
 
 # ============================================================
-# USF correction function
-# ============================================================
-def omega_usf(z, alpha_q=ALPHA_Q, z_trans=Z_TRANS, delta=DELTA):
-    """
-    Effective geometric correction Ω_USF(z).
-
-    :param z: redshift (float or array)
-    :param alpha_q: amplitude of the correction
-    :param z_trans: transition redshift
-    :param delta: transition width
-    :returns: Ω_USF(z)
-    """
-    term1 = (1.0 + z)**3 / (1.0 + (1.0 + z)**2 / z_trans**2)
-    # clip to avoid overflow in the exponential
-    term2 = 1.0 / (1.0 + np.exp(np.clip((z - z_trans) / delta, -500, 500)))
-    return alpha_q * term1 * term2
-
-# ============================================================
-# Redshift grid and model curve
+# Model curve (shared background module)
 # ============================================================
 z_vals = np.linspace(0, 10, 1000)
-omega_vals = omega_usf(z_vals)
+omega_vals = bg.omega_usf(z_vals, alpha_q, z_trans, DELTA)
 
-# ============================================================
-# Plot
-# ============================================================
 plt.figure(figsize=(8, 5))
-
-# USF curve
-plt.plot(z_vals, omega_vals, color='red', linewidth=2, label='USF best‑fit')
-
-# ΛCDM asymptotic limit (Ω = 0)
+plt.plot(z_vals, omega_vals, color='red', linewidth=2, label='USF best-fit')
 plt.axhline(0, color='gray', linestyle='--', linewidth=1.5,
             label=r'$\Lambda$CDM (asymptotic limit)')
+plt.axvline(z_trans, color='blue', linestyle=':', linewidth=1.5, alpha=0.6,
+            label=rf'Transition epoch ($z_{{\rm trans}} = {z_trans:.2f}$)')
 
-# Transition epoch marker
-plt.axvline(Z_TRANS, color='blue', linestyle=':', linewidth=1.5, alpha=0.6,
-            label=rf'Transition epoch ($z_{{\rm trans}} = {Z_TRANS}$)')
+z_fill = np.linspace(z_trans - 0.5, z_trans + 0.5, 200)
+plt.fill_between(z_fill, bg.omega_usf(z_fill, alpha_q, z_trans, DELTA),
+                 alpha=0.1, color='blue')
 
-# Shaded region to highlight the transition zone
-z_fill = np.linspace(Z_TRANS - 0.5, Z_TRANS + 0.5, 200)
-omega_fill = omega_usf(z_fill)
-plt.fill_between(z_fill, omega_fill, alpha=0.1, color='blue')
-
-# Labels and title
 plt.xlabel(r'Redshift $z$', fontsize=14)
 plt.ylabel(r'Effective geometric correction $\Omega_{\rm USF}(z)$', fontsize=14)
 plt.title('Evolution of the USF geometric correction', fontsize=16)
 plt.legend(loc='lower right', fontsize=12)
-
-# Grid and fine‑tuning
 plt.grid(alpha=0.3)
 plt.tight_layout()
 
-# Save figures
 plt.savefig('results/Omega_USF_evolution.pdf', bbox_inches='tight')
 plt.savefig('results/Omega_USF_evolution.png', dpi=300, bbox_inches='tight')
-plt.show()
 
 print("Figure saved to results/Omega_USF_evolution.pdf")
