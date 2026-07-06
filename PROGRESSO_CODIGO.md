@@ -19,13 +19,16 @@ aumenta o sound speed e infla r_d em +4.4%. Pela degenerescência r_d·h das BAO
 H0 é puxado para baixo em ≈ 4.4%: 67.4 × (1 − 0.044) ≈ 64.4 ≈ **64.2** (o valor
 anômalo da Tabela 2 do artigo). Este número vai para a carta-resposta.
 
-## Em Andamento
+### Tópico 2 — Setor de radiação e horizonte sonoro r_d
 
-- [ ] Tópico 2 – Separar constantes de radiação em `usf_constants.py` (ω_γ vs ω_r)
-- [ ] Tópico 2 – Usar ω_γ na razão R e ω_r no termo (1+z)⁴, nos dois módulos
-- [ ] Tópico 2 – z_drag via Eisenstein & Hu (1998) em função de (ω_b, ω_m)
-- [ ] Tópico 2 – Prior gaussiano de BBN em ω_b
-- [ ] Tópico 2 – Tratamento de neutrinos massivos documentado
+- [x] Tópico 2 – Separar constantes de radiação em `usf_constants.py`: `OMEGA_GAMMA_H2 = 2.4728e-5` (fótons) e `OMEGA_R_H2 = ω_γ(1+0.2271·3.044) ≈ 4.182e-5` (radiação total).
+- [x] Tópico 2 – ω_γ usado na razão R do sound speed; ω_r no termo (1+z)⁴ — implementado uma única vez em `theory_module/background.py` (novo módulo compartilhado, antecipa o Tópico 9) e consumido por theory e likelihood.
+- [x] Tópico 2 – z_drag(ω_b, ω_m) por ponto da cadeia. **Desvio do plano, documentado:** a fórmula EH98 dá z_d ≈ 1021 vs 1060 do CAMB (viés de +2.4% em r_d — trocaria um bug por outro). Implementada grade calibrada no CAMB (`theory_module/data/zdrag_camb_grid.npz`, gerada por `analysis_scripts/make_zdrag_grid.py`; também tabula z* para o Tópico 5) com interpolação; EH98 mantida como referência (`z_drag_eh98`) com teste documentando a discrepância. Cross-check independente com a fórmula de Aubourg et al. (2015) — concordância < 0.3%.
+- [x] Tópico 2 – Prior gaussiano de BBN em ω_b (0.02218 ± 0.00055) nos dois YAMLs; ω_b agora é parâmetro amostrado (`omega_b`) da teoria e da likelihood BAO; r_d depende só de densidades físicas (teste `test_rd_independent_of_H0_and_usf`).
+- [x] Tópico 2 – Neutrinos: Σm_ν = 0.06 eV em Ω_m a baixo z, relativísticos na integral de r_d (ω_cb = ω_m − ω_ν); erro quantificado contra CAMB em `docs/NEUTRINOS.md` (≤ 0.006% nos observáveis BAO).
+
+**Resultado da correção:** r_d = 147.110 Mpc vs CAMB 147.101 (**+0.006%**, era +4.4%);
+χ² BAO no best-fit DESI DR2 = **10.3 para 13 pontos** (era 227.5). Suíte: 27 passed.
 
 ## Pendentes
 
@@ -49,3 +52,4 @@ anômalo da Tabela 2 do artigo). Este número vai para a carta-resposta.
 | Data | Tópico | Evento |
 |---|---|---|
 | 2026-07-06 | 1 | Suíte criada; 18 passed, 2 xfailed (bugs documentados). Desvio de r_d: **+4.401%** vs CAMB. χ² BAO no best-fit DESI: **227.5/13 pontos**. |
+| 2026-07-06 | 2 | Setor de radiação corrigido; z_drag calibrado em grade CAMB; prior BBN em ω_b; r_d **+0.006%** vs CAMB; χ² BAO **10.3/13**. 27 passed. |

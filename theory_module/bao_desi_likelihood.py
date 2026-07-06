@@ -1,183 +1,94 @@
 """
 DESI DR2 BAO likelihood for the Unified State Function (USF) model.
 
-This module provides a custom Cobaya likelihood that evaluates the agreement
-between the USF background expansion and the Baryon Acoustic Oscillation
-measurements from the Dark Energy Spectroscopic Instrument (DESI) Data Release 2.
+Custom Cobaya likelihood comparing the USF background expansion with the
+BAO measurements from DESI Data Release 2 (D_M/r_d, D_H/r_d, D_V/r_d).
+
+All physics comes from :mod:`theory_module.background` — the same functions
+used by the theory class, the plot scripts and the test suite.  The sound
+horizon r_d is evaluated per sample from the physical densities
+(ω_b sampled with a BBN prior; ω_m = Ω_m h²) with a CAMB-calibrated drag
+redshift, so the BAO ruler is fully self-consistent with the sampled
+cosmology (Referee 1, Comment 1).
 
 Usage:
-    Place the directory `desi_bao_dr2/` (containing the mean and covariance
-    files) inside the Cobaya packages data folder and set the `data_path`
-    option accordingly in the YAML configuration.
+    Place the directory `desi_bao_dr2/` (mean and covariance files) inside
+    the Cobaya packages data folder and set `data_path` in the YAML.
 
 Author: Pantaleon Systems
 Date: 2026
 """
 
 import os
+
 import numpy as np
-from scipy import integrate
 from cobaya.likelihood import Likelihood
-from usf_constants import C_KM_S, OMEGA_B_H2, OMEGA_GAMMA_H2, Z_DRAG, DELTA
+
+from theory_module import background as bg
+from usf_constants import C_KM_S
 
 
 class BAODESILikelihood(Likelihood):
-    """
-    Likelihood for DESI DR2 BAO data within the USF effective geometric model.
+    """Likelihood for DESI DR2 BAO data within the USF model.
 
-    This likelihood computes the key BAO observables – transverse comoving
-    distance D_M/r_d, Hubble distance D_H/r_d, and the angle-averaged
-    distance D_V/r_d – using the USF expansion history, and compares them
-    with the official DESI measurements.
-
-    :ivar data_path: Path to the directory containing the DESI mean and
-        covariance files.
-    :ivar params: Dictionary of required parameter names (all mapped to
-        the USF model).
+    :ivar data_path: directory containing the DESI mean and covariance files.
     """
+
     data_path = ""
 
     # Declaration of the input parameters expected by this likelihood.
     params = {
         "H0": None,
         "Omega_m": None,
+        "omega_b": None,
         "alpha_q": None,
         "z_trans": None,
     }
 
     def initialize(self):
-        """
-        Called once at the start of the MCMC run.
-
-        Reads the DESI mean vector and covariance matrix, stores the
-        effective redshifts and the inverse covariance for fast evaluation
-        of the log-likelihood.
-        """
+        """Read the DESI mean vector and covariance matrix once."""
         mean_file = os.path.join(self.data_path,
                                  "desi_gaussian_bao_ALL_GCcomb_mean.txt")
-        cov_file  = os.path.join(self.data_path,
-                                 "desi_gaussian_bao_ALL_GCcomb_cov.txt")
+        cov_file = os.path.join(self.data_path,
+                                "desi_gaussian_bao_ALL_GCcomb_cov.txt")
 
-        # Parse the mean file (columns: z, value, observable type).
         rows = []
-        with open(mean_file, 'r') as f:
+        with open(mean_file, "r") as f:
             for line in f:
                 line = line.strip()
-                if not line or line.startswith('#'):
+                if not line or line.startswith("#"):
                     continue
                 parts = line.split()
                 rows.append((float(parts[0]), float(parts[1]), parts[2]))
 
-        self.z_eff     = np.array([r[0] for r in rows])
-        self.obs_val   = np.array([r[1] for r in rows])
-        self.obs_type  = [r[2] for r in rows]
+        self.z_eff = np.array([r[0] for r in rows])
+        self.obs_val = np.array([r[1] for r in rows])
+        self.obs_type = [r[2] for r in rows]
 
-        # Load covariance matrix and precompute its inverse.
         cov = np.loadtxt(cov_file)
         self.cov_inv = np.linalg.inv(cov)
 
-        self._c_km_s = C_KM_S
-        self._delta  = DELTA
-
-    def _E(self, z, H0, Omega_m, alpha_q, z_trans):
-        """
-        Dimensionless Hubble parameter E(z) = H(z) / H0.
-
-        :param z: Redshift (float or array).
-        :param H0: Hubble constant (km/s/Mpc).
-        :param Omega_m: Present-day matter density fraction.
-        :param alpha_q: Amplitude of the geometric correction.
-        :param z_trans: Transition redshift.
-        :returns: E(z) array.
-        """
-        z = np.asarray(z, dtype=np.float64)
-        Omega_r = OMEGA_GAMMA_H2 / (H0 / 100.0) ** 2
-
-        # USF correction at z=0 (required before setting Omega_L)
-        supp0 = 1.0 / (1.0 + np.exp(-z_trans / self._delta))
-        Oz0   = alpha_q * supp0 / (1.0 + 1.0 / z_trans ** 2)
-
-        # Flat-universe condition: Ω_m + Ω_r + Ω_Λ + Ω_USF(0) = 1
-        Omega_L = 1.0 - Omega_m - Omega_r - Oz0
-
-        suppression = 1.0 / (1.0 + np.exp(
-            np.clip((z - z_trans) / self._delta, -500, 500)))
-        Oz = (alpha_q * suppression * (1.0 + z) ** 3
-              / (1.0 + (1.0 + z) ** 2 / z_trans ** 2))
-        # With the flat-universe Omega_L, E²(0) = 1 by construction.
-        Esq = (Omega_m * (1.0 + z) ** 3 + Omega_r * (1.0 + z) ** 4
-               + Omega_L + Oz)
-
-        return np.sqrt(np.maximum(Esq, 1e-30))
-
-    def _comoving_distance(self, z, H0, Omega_m, alpha_q, z_trans):
-        """
-        Line-of-sight comoving distance to redshift z.
-
-        .. math:: D_C(z) = c \\int_0^z \\frac{dz'}{H(z')}.
-
-        :param z: Target redshift.
-        :param H0: Hubble constant (km/s/Mpc).
-        :param Omega_m: Matter density fraction.
-        :param alpha_q: Geometric correction amplitude.
-        :param z_trans: Transition redshift.
-        :returns: Comoving distance in Mpc.
-        """
-        result, _ = integrate.quad(
-            lambda zp: self._c_km_s / (H0 * self._E(zp, H0, Omega_m,
-                                                     alpha_q, z_trans)),
-            0.0, z
-        )
-        return result
-
-    def _r_s(self, H0, Omega_m, alpha_q, z_trans, z_drag=Z_DRAG):
-        """
-        Sound horizon at the drag epoch.
-
-        Uses the physical baryon and photon densities fixed to Planck 2018.
-        """
-        def integrand(z):
-            R = 3.0 * OMEGA_B_H2 / (4.0 * OMEGA_GAMMA_H2 * (1.0 + z))
-            cs = self._c_km_s / np.sqrt(3.0 * (1.0 + R))
-            return cs / (H0 * self._E(z, H0, Omega_m, alpha_q, z_trans))
-
-        result, _ = integrate.quad(integrand, z_drag, np.inf,
-                                   limit=200, epsabs=1e-6, epsrel=1e-6)
-        return result
-
-    def logp(self, H0, Omega_m, alpha_q, z_trans, **kwargs):
-        """
-        Compute the log-likelihood of the DESI BAO data given the USF model.
-
-        For each effective redshift, the corresponding BAO observable
-        (D_M/r_d, D_H/r_d, or D_V/r_d) is computed and compared with the
-        measured value using the inverse covariance matrix.
-
-        :param H0: Hubble constant (km/s/Mpc).
-        :param Omega_m: Present-day matter density fraction.
-        :param alpha_q: Amplitude of the geometric correction.
-        :param z_trans: Transition redshift.
-        :returns: Log-likelihood value (float).
-        """
-        rs = self._r_s(H0, Omega_m, alpha_q, z_trans)
+    def logp(self, H0, Omega_m, omega_b, alpha_q, z_trans, **kwargs):
+        """Gaussian log-likelihood of the DESI BAO data given the USF model."""
+        omega_m = Omega_m * (H0 / 100.0) ** 2
+        rs = bg.r_drag(omega_b, omega_m)
 
         pred = []
         for z, otype in zip(self.z_eff, self.obs_type):
             if otype == "DM_over_rs":
-                DM = self._comoving_distance(z, H0, Omega_m, alpha_q, z_trans)
+                DM = bg.comoving_distance(z, H0, Omega_m, alpha_q, z_trans)
                 pred.append(DM / rs)
             elif otype == "DH_over_rs":
-                Hz = H0 * self._E(z, H0, Omega_m, alpha_q, z_trans)
-                pred.append(self._c_km_s / (Hz * rs))
+                Hz = bg.hubble(z, H0, Omega_m, alpha_q, z_trans)
+                pred.append(C_KM_S / (Hz * rs))
             elif otype == "DV_over_rs":
-                DM = self._comoving_distance(z, H0, Omega_m, alpha_q, z_trans)
-                Hz = H0 * self._E(z, H0, Omega_m, alpha_q, z_trans)
-                DH = self._c_km_s / Hz
-                DV = (z * DM**2 * DH) ** (1.0 / 3.0)
+                DM = bg.comoving_distance(z, H0, Omega_m, alpha_q, z_trans)
+                Hz = bg.hubble(z, H0, Omega_m, alpha_q, z_trans)
+                DH = C_KM_S / Hz
+                DV = (z * DM ** 2 * DH) ** (1.0 / 3.0)
                 pred.append(DV / rs)
             else:
                 raise ValueError(f"Unknown BAO observable type: {otype}")
 
-        pred  = np.array(pred)
-        delta = pred - self.obs_val
+        delta = np.array(pred) - self.obs_val
         return -0.5 * delta @ self.cov_inv @ delta

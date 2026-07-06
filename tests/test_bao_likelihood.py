@@ -6,10 +6,9 @@ best fit (Omega_m ≈ 0.2975; H0 ≈ 68.5 for BAO+BBN calibration).  A correct
 implementation must yield a chi² compatible with the published fit quality
 (chi² of order the number of data points, no systematic offset).
 
-STATUS (Topic 1 audit): expected to FAIL with the original pipeline — the
-inflated r_d (see test_sound_horizon_vs_camb.py) shifts every D/r_d
-prediction coherently, producing a huge chi² at the published best fit.
-The xfail marker must be removed once Topic 2 lands.
+History: the Topic 1 audit measured chi² = 227.5 for 13 points at the
+published best fit, caused by the +4.4% inflated r_d (fixed in Topic 2).
+This test now guards the fix.
 """
 
 import numpy as np
@@ -34,15 +33,10 @@ def test_data_vector_loaded(bao_like):
     assert set(bao_like.obs_type) <= {"DM_over_rs", "DH_over_rs", "DV_over_rs"}
 
 
-@pytest.mark.xfail(
-    reason="Bug conhecido (Tópico 2): r_d inflado desloca todas as predições "
-    "D/r_d; chi² no best-fit publicado do DESI sai ordens de grandeza acima "
-    "do aceitável. Remover este marcador ao concluir o Tópico 2.",
-    strict=False,
-)
 def test_chi2_at_desi_bestfit(bao_like):
     logp = bao_like.logp(
-        H0=DESI_H0, Omega_m=DESI_OMEGA_M, alpha_q=0.0, z_trans=2.0
+        H0=DESI_H0, Omega_m=DESI_OMEGA_M, omega_b=0.02218,
+        alpha_q=0.0, z_trans=2.0
     )
     chi2 = -2.0 * logp
     ndata = len(bao_like.z_eff)

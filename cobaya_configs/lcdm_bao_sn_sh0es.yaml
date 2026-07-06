@@ -17,6 +17,11 @@ params:
     prior: { min: 0.2, max: 0.4 }
     ref: 0.315
     proposal: 0.005
+  omega_b: # Ω_b h² com prior gaussiano de BBN (Schöneberg 2024)
+    prior: { dist: norm, loc: 0.02218, scale: 0.00055 }
+    ref: 0.02218
+    proposal: 0.0003
+    latex: \omega_b
   alpha_q:
     value: 0.0 # <--- Desliga a correção da USF, reduzindo ao ΛCDM puro
   z_trans:

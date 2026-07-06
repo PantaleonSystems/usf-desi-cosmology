@@ -11,13 +11,14 @@ import os
 from tests.conftest import REPO_ROOT
 
 
-def make_theory(H0, Omega_m, alpha_q=0.0, z_trans=2.0, **extra):
+def make_theory(H0, Omega_m, alpha_q=0.0, z_trans=2.0, omega_b=0.02218, **extra):
     """Return a theory instance with parameters set, bypassing Cobaya init."""
     from theory_module.feu_background import FEU
 
     theo = object.__new__(FEU)
     theo.H0 = H0
     theo.Omega_m = Omega_m
+    theo.omega_b = omega_b
     theo.alpha_q = alpha_q
     theo.z_trans = z_trans
     for key, val in extra.items():

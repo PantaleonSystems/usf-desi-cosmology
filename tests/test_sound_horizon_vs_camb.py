@@ -1,22 +1,21 @@
 """
-Topic 1 — Validation of the sound horizon r_d against CAMB.
+Topics 1–2 — Validation of the sound horizon r_d against CAMB.
 
 Runs CAMB for the Planck 2018 baseline cosmology and compares its r_drag
-with the pipeline's internal sound-horizon integral evaluated for the same
-physical densities.
+with the pipeline's sound-horizon (numerical integral + CAMB-calibrated
+z_drag).  Also cross-checks against the independent Aubourg et al. (2015)
+fitting formula.
 
-STATUS (Topic 1 audit): this test is expected to FAIL against the original
-pipeline, which used the *total* radiation density (4.15e-5) as the photon
-density in the baryon-to-photon ratio R, inflating the sound speed and hence
-r_d by several percent.  The measured deviation is recorded in
-PROGRESSO_CODIGO.md and the fix is Topic 2 of PLANO_CORRECAO_REFEREE1.md.
-The xfail marker must be removed once Topic 2 lands (strict=True will then
-flag it as XPASS -> failure, forcing the cleanup).
+History: the Topic 1 audit (2026-07-06) measured a +4.401% deviation in the
+original pipeline, caused by the total radiation density (4.15e-5) being
+used as the photon density in the baryon-to-photon ratio R.  Fixed in
+Topic 2 (see PROGRESSO_CODIGO.md); this test now guards the fix.
 """
 
 import numpy as np
 import pytest
 
+from theory_module import background as bg
 from tests.helpers import make_theory
 
 # Planck 2018 TT,TE,EE+lowE+lensing baseline.
@@ -25,43 +24,78 @@ OMCH2 = 0.1200
 H0 = 67.36
 MNU = 0.06  # eV, one massive eigenstate
 
-RD_TOL = 0.005  # 0.5 % — accounts for the EH98 z_drag fitting formula.
+RD_TOL = 0.003  # 0.3% on r_d vs CAMB
+GRID = [
+    (0.02218, 0.1200, 67.0),
+    (0.02237, 0.1200, 67.36),
+    (0.02218, 0.1432, 70.0),
+    (0.02273, 0.1100, 68.0),
+]
 
 
-@pytest.fixture(scope="module")
-def camb_rdrag():
+def camb_rdrag(ombh2, omch2, h0):
     import camb
 
     pars = camb.set_params(
-        ombh2=OMBH2, omch2=OMCH2, H0=H0, mnu=MNU, omk=0.0,
+        ombh2=ombh2, omch2=omch2, H0=h0, mnu=MNU, omk=0.0,
         As=2.1e-9, ns=0.9649, tau=0.0544,
     )
-    results = camb.get_background(pars)
-    derived = results.get_derived_params()
-    return derived["rdrag"], derived["zdrag"]
+    return camb.get_background(pars).get_derived_params()
 
 
-@pytest.mark.xfail(
-    reason="Bug conhecido (Tópico 2): ω_γ=4.15e-5 (radiação total) usado como "
-    "densidade de fótons na razão R do sound speed infla r_d. Remover este "
-    "marcador ao concluir o Tópico 2.",
-    strict=False,
-)
-def test_rd_matches_camb(camb_rdrag):
-    rd_camb, zdrag_camb = camb_rdrag
+def test_rd_matches_camb_planck_baseline():
+    derived = camb_rdrag(OMBH2, OMCH2, H0)
+    rd_camb, zdrag_camb = derived["rdrag"], derived["zdrag"]
 
-    h = H0 / 100.0
-    omega_nu = MNU / 93.14
-    omega_m = OMBH2 + OMCH2 + omega_nu
-    theo = make_theory(H0, omega_m / h**2, alpha_q=0.0)
+    omega_m = OMBH2 + OMCH2 + MNU / 93.14
+    theo = make_theory(H0, omega_m / (H0 / 100.0) ** 2,
+                       alpha_q=0.0, omega_b=OMBH2)
 
     rd_ours = theo.get_r_s()
     dev = rd_ours / rd_camb - 1.0
     print(
-        f"\n[r_d audit] CAMB rdrag = {rd_camb:.3f} Mpc (zdrag={zdrag_camb:.2f}) | "
-        f"pipeline r_s = {rd_ours:.3f} Mpc | deviation = {dev * 100:+.3f}%"
+        f"\n[r_d] CAMB rdrag = {rd_camb:.3f} Mpc (zdrag={zdrag_camb:.2f}) | "
+        f"pipeline r_d = {rd_ours:.3f} Mpc | deviation = {dev * 100:+.3f}%"
     )
+    assert abs(dev) < RD_TOL
+
+
+@pytest.mark.parametrize("ombh2,omch2,h0", GRID)
+def test_rd_matches_camb_grid(ombh2, omch2, h0):
+    derived = camb_rdrag(ombh2, omch2, h0)
+    omega_m = ombh2 + omch2 + MNU / 93.14
+    rd_ours = bg.r_drag(ombh2, omega_m)
+    dev = rd_ours / derived["rdrag"] - 1.0
     assert abs(dev) < RD_TOL, (
-        f"r_d deviates from CAMB by {dev * 100:+.3f}% "
-        f"(pipeline {rd_ours:.3f} vs CAMB {rd_camb:.3f} Mpc)"
+        f"r_d off by {dev * 100:+.3f}% at ω_b={ombh2}, ω_c={omch2}"
     )
+
+
+def test_rd_crosscheck_aubourg15():
+    """Numerical integral vs Aubourg+15 fitting formula (independent check)."""
+    for omega_b, omega_m in [(0.02218, 0.1400), (0.02237, 0.14301),
+                             (0.02273, 0.1330)]:
+        rd_int = bg.r_drag(omega_b, omega_m)
+        rd_fit = bg.r_drag_aubourg15(omega_b, omega_m)
+        assert abs(rd_int / rd_fit - 1.0) < 0.003, (
+            f"integral {rd_int:.3f} vs Aubourg15 {rd_fit:.3f} at "
+            f"ω_b={omega_b}, ω_m={omega_m}"
+        )
+
+
+def test_rd_independent_of_H0_and_usf():
+    """r_d must depend only on physical densities, not on H0 or USF params."""
+    rd_ref = bg.r_drag(0.02218, 0.1432)
+    # r_drag takes only (omega_b, omega_m): recompute via theory at two H0
+    t1 = make_theory(60.0, 0.1432 / 0.36, alpha_q=-0.1, z_trans=4.66)
+    t2 = make_theory(80.0, 0.1432 / 0.64, alpha_q=0.0)
+    assert abs(t1.get_r_s() / rd_ref - 1.0) < 1e-10
+    assert abs(t2.get_r_s() / rd_ref - 1.0) < 1e-10
+
+
+def test_eh98_discrepancy_documented():
+    """EH98 z_drag ≈ 1021 vs CAMB ≈ 1060 — must NOT be used in production."""
+    zd_eh98 = bg.z_drag_eh98(0.02237, 0.1432)
+    zd_camb = bg.z_drag(0.02237, 0.1432)
+    assert 1010 < zd_eh98 < 1035
+    assert 1055 < zd_camb < 1065
