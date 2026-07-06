@@ -51,10 +51,18 @@ anômalo da Tabela 2 do artigo). Este número vai para a carta-resposta.
 - [x] Tópico 5 – Módulo `theory_module/cmb_distance_priors.py`: vetor (R, ℓ_A, ω_b) = (1.7502±0.0046, 301.471±0.090, 0.02236±0.00015) com matriz de correlação completa de **Chen, Huang & Wang 2019 (arXiv:1808.05724, Tabela I, verificada no PDF)**. Mapeamento teoria→dado reproduz **exatamente** a receita de compressão deles (Eqs. 1–6: z* das cadeias Planck/CAMB via nossa grade; E(z) com Ω_r = Ω_m/(1+z_eq); r_s com 31500ω_b(T/2.7)⁻⁴) — validado no mean do Planck 2018: predição (1.7503, 301.429) vs dado (1.7502, 301.471), **χ² = 0.29**. Termo USF entra na linha de visada (teste garante sensibilidade a α_q — exatamente o efeito que o revisor exigiu constranger).
 - [x] Tópico 5 – Bônus de precisão: `bg.comoving_distance_cmb` com transição de neutrino massivo resolvida (fitting de Komatsu+) → D_M(z*) a **−0.0007%** do CAMB (era −0.027% na aproximação de fluido); grade de z* já tabulada junto com z_drag; provider `get_rs_zstar`/`get_z_star`/`get_DM` expostos na teoria.
 - [x] Tópico 5 – 4 YAMLs de produção `+cmb` criados (`usf/lcdm × {bao_sn, bao_sn_sh0es} _cmb`, seeds 1009–1012) e grupo `--grid cmb` no `run_pipeline.sh` (incluído em `--grid all`). Suíte: 44 passed.
-- [ ] Tópico 6 – YAMLs de nested sampling (PolyChord)
-- [ ] Tópico 6 – Script de geração de mocks e ajuste em lote
+### Tópico 6 — Estatística de comparação de modelos
+
+- [x] Tópico 6 – 4 YAMLs de nested sampling (`*_polychord.yaml`: usf/lcdm × {bao_sn, bao_sn_cmb}, nlive=500, precision 0.001, seeds 2001–2004). Requer `cobaya-install polychord` antes das runs [ANÁLISE].
+- [x] Tópico 6 – `analysis_scripts/run_mocks.py`: calibração frequentista do Δχ² sob a nula ΛCDM — mocks de BAO (cov DESI) + SNe (cov STAT+SYS completa, M marginalizado por projeção idêntica à do Cobaya), ajuste de ΛCDM e USF **perfilando z_trans em grade geomspace(0.5, 20)** (nunca fixo — look-elsewhere), prior BBN incluso, flag `--with-sh0es` (sorteia o mock do prior local). Smoke test 2 mocks: Δχ² = {1.06, 3.76} sob a nula — mecânica validada. Produção: `--n-mocks 300+` ([ANÁLISE]).
+
+### Tópico 7 — Prior de z_trans
+
 - [ ] Tópico 7 – Estender prior de z_trans nos YAMLs
-- [ ] Tópico 11 – Atualizar README e `run_pipeline.sh`
+
+### Tópico 11 — Empacotamento
+
+- [ ] Tópico 11 – Atualizar README
 
 ## Log de execução
 
@@ -65,3 +73,4 @@ anômalo da Tabela 2 do artigo). Este número vai para a carta-resposta.
 | 2026-07-06 | 3 | Auditoria sn.pantheonplus (M marginalizado analiticamente; sem dupla contagem); plot_hubble_diag.py refeito com M̂ por modelo — drift da Fig. 4 confirmado como artefato. |
 | 2026-07-06 | 9 | Unificação completa: provider Cobaya, FEU→USF, grade de 8 YAMLs com seeds, cross-val CAMB como gate, 39 passed. |
 | 2026-07-06 | 5 | CMB distance priors (Chen+19 verificado no paper) implementados com receita de compressão exata; χ²=0.29 no mean do Planck; 4 YAMLs +cmb. 44 passed. |
+| 2026-07-06 | 6 | PolyChord YAMLs (4) + run_mocks.py (perfil em z_trans, cov SN completa, M projetado); smoke 2 mocks OK. |
