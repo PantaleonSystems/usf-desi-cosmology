@@ -30,11 +30,13 @@ anômalo da Tabela 2 do artigo). Este número vai para a carta-resposta.
 **Resultado da correção:** r_d = 147.110 Mpc vs CAMB 147.101 (**+0.006%**, era +4.4%);
 χ² BAO no best-fit DESI DR2 = **10.3 para 13 pontos** (era 227.5). Suíte: 27 passed.
 
-## Pendentes
+### Tópico 3 — Calibração das supernovas (degenerescência M–H0)
 
-- [ ] Tópico 3 – Auditar `sn.pantheonplus` (tratamento de M) e documentar
-- [ ] Tópico 3 – Esquema canônico de calibração nos YAMLs (sem dupla contagem)
-- [ ] Tópico 3 – Reescrever `plot_hubble_diag.py` (offset M marginalizado)
+- [x] Tópico 3 – Auditoria de `sn.pantheonplus` (Cobaya 3.6.2) documentada em `docs/SN_CALIBRATION.md`: usa `m_b_corr` (não calibrado), corte z > 0.01 (exclui calibradores Cefeidas) e **marginaliza M analiticamente** → a likelihood de SNe é insensível a H0; **não há dupla contagem** com o prior SH0ES no nível da likelihood.
+- [x] Tópico 3 – Esquema canônico definido e documentado (`docs/SN_CALIBRATION.md`): runs principais `*_bao_sn` sem informação local de H0; variante rotulada `*_bao_sn_sh0es` com o prior gaussiano (nunca `pantheonplusshoes` + prior juntos; nunca `MU_SH0ES` em análises). Grade completa de YAMLs criada no Tópico 9.
+- [x] Tópico 3 – `plot_hubble_diag.py` reescrito: `m_b_corr` + máscara da likelihood + offset M̂ ajustado por modelo (média ponderada, mimetiza a marginalização analítica); resíduos mostram apenas a *forma* de d_L(z). Smoke test: **com M marginalizado, ΛCDM e USF ajustam a forma das SNe igualmente bem (χ²/N diag 0.442 vs 0.446)** — confirma que o "drift" da Fig. 4 original era artefato da calibração SH0ES embutida em `MU_SH0ES`.
+
+## Pendentes
 - [ ] Tópico 9 – Módulo único de background + refactor theory/likelihood/plots
 - [ ] Tópico 9 – Validação cruzada vs CAMB no CI (tolerâncias documentadas)
 - [ ] Tópico 9 – Testes de regressão de consistência interna
@@ -53,3 +55,4 @@ anômalo da Tabela 2 do artigo). Este número vai para a carta-resposta.
 |---|---|---|
 | 2026-07-06 | 1 | Suíte criada; 18 passed, 2 xfailed (bugs documentados). Desvio de r_d: **+4.401%** vs CAMB. χ² BAO no best-fit DESI: **227.5/13 pontos**. |
 | 2026-07-06 | 2 | Setor de radiação corrigido; z_drag calibrado em grade CAMB; prior BBN em ω_b; r_d **+0.006%** vs CAMB; χ² BAO **10.3/13**. 27 passed. |
+| 2026-07-06 | 3 | Auditoria sn.pantheonplus (M marginalizado analiticamente; sem dupla contagem); plot_hubble_diag.py refeito com M̂ por modelo — drift da Fig. 4 confirmado como artefato. |
