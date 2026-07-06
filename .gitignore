@@ -6,6 +6,8 @@ __pycache__/
 /.claude
 /chains/*txt
 
+/pdfs
+
 # C extensions
 *.so
 
