@@ -58,7 +58,7 @@ anômalo da Tabela 2 do artigo). Este número vai para a carta-resposta.
 
 ### Tópico 7 — Prior de z_trans
 
-- [ ] Tópico 7 – Estender prior de z_trans nos YAMLs
+- [x] Tópico 7 – Prior de z_trans estendido para U(0.5, 20.0) em TODOS os YAMLs USF (8 arquivos, incl. polychord e cmb), com ref/proposal reescalados (3.0/0.15); grade de perfilamento dos mocks já cobre o mesmo range. Runs devem demonstrar posterior fechado longe da borda ([ANÁLISE]).
 
 ### Tópico 11 — Empacotamento
 
@@ -74,3 +74,4 @@ anômalo da Tabela 2 do artigo). Este número vai para a carta-resposta.
 | 2026-07-06 | 9 | Unificação completa: provider Cobaya, FEU→USF, grade de 8 YAMLs com seeds, cross-val CAMB como gate, 39 passed. |
 | 2026-07-06 | 5 | CMB distance priors (Chen+19 verificado no paper) implementados com receita de compressão exata; χ²=0.29 no mean do Planck; 4 YAMLs +cmb. 44 passed. |
 | 2026-07-06 | 6 | PolyChord YAMLs (4) + run_mocks.py (perfil em z_trans, cov SN completa, M projetado); smoke 2 mocks OK. |
+| 2026-07-06 | 7 | Prior z_trans → U(0.5, 20) em todos os YAMLs USF; ref/proposal ajustados. 44 passed. |

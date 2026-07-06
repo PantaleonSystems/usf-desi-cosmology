@@ -24,9 +24,9 @@ params:
     proposal: 0.002
     latex: \alpha_q
   z_trans:
-    prior: { min: 0.5, max: 5.0 }
-    ref: 1.8
-    proposal: 0.05
+    prior: { min: 0.5, max: 20.0 } # estendido (Tópico 7): posterior deve fechar longe da borda
+    ref: 3.0
+    proposal: 0.15
     latex: z_{\rm trans}
 
 theory:
