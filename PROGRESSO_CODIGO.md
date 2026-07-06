@@ -62,7 +62,7 @@ anômalo da Tabela 2 do artigo). Este número vai para a carta-resposta.
 
 ### Tópico 11 — Empacotamento
 
-- [ ] Tópico 11 – Atualizar README
+- [x] Tópico 11 – README reescrito: aviso de status pós-referee (números antigos superseded), tabela de validação do pipeline, grade de runs documentada, instruções exatas de instalação/reprodução (cobaya-install, polychord, mocks), estrutura atualizada. `run_pipeline.sh` já reescrito no Tópico 9. Release/tag e Zenodo ficam para o fechamento pós-runs ([ANÁLISE])
 
 ## Log de execução
 
@@ -75,3 +75,4 @@ anômalo da Tabela 2 do artigo). Este número vai para a carta-resposta.
 | 2026-07-06 | 5 | CMB distance priors (Chen+19 verificado no paper) implementados com receita de compressão exata; χ²=0.29 no mean do Planck; 4 YAMLs +cmb. 44 passed. |
 | 2026-07-06 | 6 | PolyChord YAMLs (4) + run_mocks.py (perfil em z_trans, cov SN completa, M projetado); smoke 2 mocks OK. |
 | 2026-07-06 | 7 | Prior z_trans → U(0.5, 20) em todos os YAMLs USF; ref/proposal ajustados. 44 passed. |
+| 2026-07-06 | 11 | README reescrito (status pós-referee + reprodução exata). Execução [CÓDIGO] da ordem 1→2→3→9→5→6→7→11 CONCLUÍDA: 44 testes verdes. |
