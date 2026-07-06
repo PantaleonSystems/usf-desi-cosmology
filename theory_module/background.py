@@ -35,6 +35,7 @@ from scipy.interpolate import RegularGridInterpolator
 from usf_constants import (
     C_KM_S,
     DELTA,
+    N_EFF,
     OMEGA_GAMMA_H2,
     OMEGA_NU_H2,
     OMEGA_R_H2,
@@ -84,11 +85,13 @@ def hubble(z, H0, Omega_m, alpha_q=0.0, z_trans=2.0, delta=DELTA):
 
 
 def comoving_distance(z, H0, Omega_m, alpha_q=0.0, z_trans=2.0, delta=DELTA,
-                      grid_size=4000):
+                      grid_size=None):
     """Line-of-sight comoving distance D_C(z) [Mpc]; scalar or array z.
 
     Vectorised cumulative-trapezoid integration on a fine grid followed by
-    interpolation (sub-0.01% accuracy for grid_size = 4000).
+    interpolation.  The grid resolution scales with z_max so that the
+    trapezoid error stays below 0.01% also for CMB-era targets (z* ≈ 1090,
+    used by the CMB distance-prior likelihood).
     """
     z_arr = np.atleast_1d(np.asarray(z, dtype=np.float64))
     z_max = float(z_arr.max())
@@ -96,6 +99,8 @@ def comoving_distance(z, H0, Omega_m, alpha_q=0.0, z_trans=2.0, delta=DELTA,
         out = np.zeros_like(z_arr)
         return out[0] if np.isscalar(z) or np.ndim(z) == 0 else out
 
+    if grid_size is None:
+        grid_size = int(min(2e5, max(4000, 100 * z_max)))
     z_grid = np.linspace(0.0, z_max, grid_size)
     integrand = C_KM_S / (H0 * E(z_grid, H0, Omega_m, alpha_q, z_trans, delta))
     dc_grid = integrate.cumulative_trapezoid(integrand, z_grid, initial=0.0)
@@ -114,6 +119,60 @@ def luminosity_distance(z, H0, Omega_m, alpha_q=0.0, z_trans=2.0, delta=DELTA):
     """Luminosity distance D_L(z) = (1+z) D_C(z) [Mpc]."""
     z_arr = np.asarray(z, dtype=np.float64)
     return comoving_distance(z, H0, Omega_m, alpha_q, z_trans, delta) * (1.0 + z_arr)
+
+
+# ---------------------------------------------------------------------------
+# CMB-era distance (explicit massive-neutrino transition)
+# ---------------------------------------------------------------------------
+
+# Komatsu et al. (2009, WMAP5) fitting for the massive-neutrino density:
+# rho_nu ∝ (1+z)^4 f(y), f(y) = [1 + (A y)^p]^{1/p}, y = m_ν/(k_B T_ν(z)).
+_KOMATSU_A = 0.3173
+_KOMATSU_P = 1.83
+_KT_NU0_EV = 8.617333e-5 * (4.0 / 11.0) ** (1.0 / 3.0) * 2.7255  # k_B T_ν0 [eV]
+_MNU_EV = 0.06  # one massive eigenstate (see docs/NEUTRINOS.md)
+
+
+def _E2h2_with_massive_nu(z, omega_m, omega_l_h2):
+    """h² E²(z) with the ν mass transition resolved (for CMB-era distances).
+
+    The low-z E(z) used for BAO/SN treats Σm_ν as matter (error ≤ 0.006% for
+    z ≤ 5, docs/NEUTRINOS.md), but the distance to last scattering crosses
+    z_nr ≈ 110 where that approximation biases D_M(z*) by ≈ 0.03%
+    (≈ 1σ of the ℓ_A measurement).  Here the massive species is integrated
+    with the Komatsu fitting function instead.
+    """
+    z = np.asarray(z, dtype=np.float64)
+    a4 = (1.0 + z) ** 4
+    omega_cb = omega_m - OMEGA_NU_H2
+    # 2 massless + 1 massive species, each carrying N_eff/3
+    per_species = 0.2271073 * (N_EFF / 3.0) * OMEGA_GAMMA_H2
+    y = _MNU_EV / (_KT_NU0_EV * (1.0 + z))
+    f_y = (1.0 + (_KOMATSU_A * y) ** _KOMATSU_P) ** (1.0 / _KOMATSU_P)
+    rho_nu = per_species * a4 * (2.0 + f_y)
+    return (omega_cb * (1.0 + z) ** 3 + OMEGA_GAMMA_H2 * a4
+            + rho_nu + omega_l_h2)
+
+
+def comoving_distance_cmb(z_star_val, H0, Omega_m, alpha_q=0.0, z_trans=2.0,
+                          delta=DELTA):
+    """D_M(z*) [Mpc] with the massive-neutrino transition resolved.
+
+    Used by the CMB distance-prior likelihood; includes the USF term (it
+    vanishes for z ≫ z_trans but contributes along the line of sight).
+    """
+    h2 = (H0 / 100.0) ** 2
+    omega_m = Omega_m * h2
+    omega_l_h2 = (1.0 - Omega_m) * h2 - OMEGA_R_H2
+
+    z_grid = np.linspace(0.0, float(z_star_val), 120000)
+    e2h2 = _E2h2_with_massive_nu(z_grid, omega_m, omega_l_h2)
+    if alpha_q != 0.0:
+        ousf = (omega_usf(z_grid, alpha_q, z_trans, delta)
+                - omega_usf(0.0, alpha_q, z_trans, delta)) * h2
+        e2h2 = e2h2 + ousf
+    integrand = C_KM_S / (100.0 * np.sqrt(e2h2))
+    return float(np.trapezoid(integrand, z_grid))
 
 
 # ---------------------------------------------------------------------------

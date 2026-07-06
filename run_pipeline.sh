@@ -17,6 +17,7 @@ fi
 CONFIGS_MAIN=(usf_bao_sn lcdm_bao_sn)
 CONFIGS_DATASETS=(usf_bao lcdm_bao usf_sn lcdm_sn)
 CONFIGS_SH0ES=(usf_bao_sn_sh0es lcdm_bao_sn_sh0es)
+CONFIGS_CMB=(usf_bao_sn_cmb lcdm_bao_sn_cmb usf_bao_sn_sh0es_cmb lcdm_bao_sn_sh0es_cmb)
 
 # ── Parse flags ────────────────────────────────────────────────────────────────
 CLEAN=false
@@ -29,9 +30,10 @@ usage() {
     echo "Usage: $0 [--clean] [--sample-only] [--plot-only] [--skip-tests] [--grid main|all|sh0es|datasets]"
     echo ""
     echo "  (no flags)       Run validation tests, main grid (BAO+SN), then plots"
-    echo "  --grid all       Run the full grid (main + per-dataset + SH0ES variants)"
+    echo "  --grid all       Run the full grid (main + per-dataset + SH0ES + CMB variants)"
     echo "  --grid sh0es     Run only the *_bao_sn_sh0es variants"
     echo "  --grid datasets  Run only the per-dataset runs (BAO-only, SN-only)"
+    echo "  --grid cmb       Run only the *_cmb variants (Planck distance priors)"
     echo "  --clean          Delete chains and results, then exit"
     echo "  --sample-only    Only run MCMC sampling (no plots)"
     echo "  --plot-only      Only generate plots (chains must already exist)"
@@ -46,7 +48,7 @@ for arg in "$@"; do
         --plot-only)   SAMPLE=false; TESTS=false ;;
         --skip-tests)  TESTS=false ;;
         --grid)        ;; # value handled below
-        main|all|sh0es|datasets) GRID=$arg ;;
+        main|all|sh0es|datasets|cmb) GRID=$arg ;;
         --help|-h)     usage ;;
         *) echo "Unknown flag: $arg"; usage ;;
     esac
@@ -56,7 +58,8 @@ case $GRID in
     main)     RUNS=("${CONFIGS_MAIN[@]}") ;;
     datasets) RUNS=("${CONFIGS_DATASETS[@]}") ;;
     sh0es)    RUNS=("${CONFIGS_SH0ES[@]}") ;;
-    all)      RUNS=("${CONFIGS_MAIN[@]}" "${CONFIGS_DATASETS[@]}" "${CONFIGS_SH0ES[@]}") ;;
+    cmb)      RUNS=("${CONFIGS_CMB[@]}") ;;
+    all)      RUNS=("${CONFIGS_MAIN[@]}" "${CONFIGS_DATASETS[@]}" "${CONFIGS_SH0ES[@]}" "${CONFIGS_CMB[@]}") ;;
 esac
 
 # ── Step 0: Clean ──────────────────────────────────────────────────────────────

@@ -46,9 +46,11 @@ anômalo da Tabela 2 do artigo). Este número vai para a carta-resposta.
 - [x] Tópico 9 – Validação cruzada externa (`test_camb_crossval.py`): D_M, D_A, H(z) < 0.1% e r_d < 0.2% vs CAMB em 4 cosmologias cobrindo o volume de prior — gate obrigatório no `run_pipeline.sh` antes de amostrar.
 - [x] Tópico 9 – Reprodutibilidade: `requirements.txt` com astropy/camb/pytest pinados; seeds nos YAMLs; `run_pipeline.sh` reescrito (gate de testes + grade `--grid main|all|sh0es|datasets` + plots parametrizados).
 
-## Pendentes
-- [ ] Tópico 5 – Módulo de CMB distance priors (R, ℓ_A, ω_b + covariância)
-- [ ] Tópico 5 – Incluir CMB distance priors nos YAMLs de produção
+### Tópico 5 — Consistência com o CMB (distance priors)
+
+- [x] Tópico 5 – Módulo `theory_module/cmb_distance_priors.py`: vetor (R, ℓ_A, ω_b) = (1.7502±0.0046, 301.471±0.090, 0.02236±0.00015) com matriz de correlação completa de **Chen, Huang & Wang 2019 (arXiv:1808.05724, Tabela I, verificada no PDF)**. Mapeamento teoria→dado reproduz **exatamente** a receita de compressão deles (Eqs. 1–6: z* das cadeias Planck/CAMB via nossa grade; E(z) com Ω_r = Ω_m/(1+z_eq); r_s com 31500ω_b(T/2.7)⁻⁴) — validado no mean do Planck 2018: predição (1.7503, 301.429) vs dado (1.7502, 301.471), **χ² = 0.29**. Termo USF entra na linha de visada (teste garante sensibilidade a α_q — exatamente o efeito que o revisor exigiu constranger).
+- [x] Tópico 5 – Bônus de precisão: `bg.comoving_distance_cmb` com transição de neutrino massivo resolvida (fitting de Komatsu+) → D_M(z*) a **−0.0007%** do CAMB (era −0.027% na aproximação de fluido); grade de z* já tabulada junto com z_drag; provider `get_rs_zstar`/`get_z_star`/`get_DM` expostos na teoria.
+- [x] Tópico 5 – 4 YAMLs de produção `+cmb` criados (`usf/lcdm × {bao_sn, bao_sn_sh0es} _cmb`, seeds 1009–1012) e grupo `--grid cmb` no `run_pipeline.sh` (incluído em `--grid all`). Suíte: 44 passed.
 - [ ] Tópico 6 – YAMLs de nested sampling (PolyChord)
 - [ ] Tópico 6 – Script de geração de mocks e ajuste em lote
 - [ ] Tópico 7 – Estender prior de z_trans nos YAMLs
@@ -62,3 +64,4 @@ anômalo da Tabela 2 do artigo). Este número vai para a carta-resposta.
 | 2026-07-06 | 2 | Setor de radiação corrigido; z_drag calibrado em grade CAMB; prior BBN em ω_b; r_d **+0.006%** vs CAMB; χ² BAO **10.3/13**. 27 passed. |
 | 2026-07-06 | 3 | Auditoria sn.pantheonplus (M marginalizado analiticamente; sem dupla contagem); plot_hubble_diag.py refeito com M̂ por modelo — drift da Fig. 4 confirmado como artefato. |
 | 2026-07-06 | 9 | Unificação completa: provider Cobaya, FEU→USF, grade de 8 YAMLs com seeds, cross-val CAMB como gate, 39 passed. |
+| 2026-07-06 | 5 | CMB distance priors (Chen+19 verificado no paper) implementados com receita de compressão exata; χ²=0.29 no mean do Planck; 4 YAMLs +cmb. 44 passed. |
