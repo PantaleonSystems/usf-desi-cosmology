@@ -23,11 +23,11 @@ Usage:
         python plot_scripts/plot_hubble_diag.py
 
 Required data files:
-    chains/feu_bao_sn_sh0es/          – USF MCMC chains
-    chains/lcdm_bao_sn_sh0es/         – ΛCDM reference chains
+    chains/usf_bao_sn                 – USF MCMC chains
+    chains/lcdm_bao_sn                – ΛCDM reference chains
     cobaya_packages/data/sn_data/PantheonPlus/Pantheon+SH0ES.dat
 
-Output (saved to results/):
+Output (saved to --outdir, default results/figures/):
     Hubble_diagram_residuals.pdf / .png
 
 Author: Pantaleon Systems
@@ -46,14 +46,18 @@ from getdist.mcsamples import loadMCSamples
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from theory_module import background as bg  # noqa: E402
 
-os.makedirs('results', exist_ok=True)
 
 Z_CUT = 0.01  # same mask as cobaya's sn.pantheonplus
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--usf-chain', default='./chains/usf_bao_sn_sh0es')
-parser.add_argument('--lcdm-chain', default='./chains/lcdm_bao_sn_sh0es')
+parser.add_argument('--usf-chain', default='./chains/usf_bao_sn')
+parser.add_argument('--lcdm-chain', default='./chains/lcdm_bao_sn')
+parser.add_argument('--outdir', default='results/figures',
+                    help='destino das figuras (use um subdiretório por modelo/grade)')
 args = parser.parse_args()
+
+OUTDIR = args.outdir
+os.makedirs(OUTDIR, exist_ok=True)
 
 # ============================================================
 # 1. Load MCMC chains and extract mean parameters
@@ -161,7 +165,7 @@ ax2.legend(markerscale=1.5, fontsize=9)
 ax2.grid(True, alpha=0.2)
 
 plt.tight_layout()
-plt.savefig('results/Hubble_diagram_residuals.pdf')
-plt.savefig('results/Hubble_diagram_residuals.png', dpi=300)
+plt.savefig(f'{OUTDIR}/Hubble_diagram_residuals.pdf')
+plt.savefig(f'{OUTDIR}/Hubble_diagram_residuals.png', dpi=300)
 
-print("\nFigure saved to results/Hubble_diagram_residuals.pdf")
+print(f"\nFigure saved to {OUTDIR}/Hubble_diagram_residuals.pdf")

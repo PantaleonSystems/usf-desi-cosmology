@@ -12,10 +12,10 @@ sampler (Topic 9 of the correction plan; no local physics reimplementation).
 
 Usage (from the repository root):
     python plot_scripts/plot_desi_bao.py \
-        [--usf-chain chains/usf_bao_sn_sh0es] \
-        [--lcdm-chain chains/lcdm_bao_sn_sh0es]
+        [--usf-chain chains/usf_bao_sn] \
+        [--lcdm-chain chains/lcdm_bao_sn]
 
-Output (saved to results/):
+Output (saved to --outdir, default results/figures/):
     comparison_triangle.pdf       – H0 posterior comparison (USF vs ΛCDM)
     BAO_observables_vs_DESI.pdf   – BAO observables D_M/r_d, D_H/r_d
 
@@ -37,12 +37,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from theory_module import background as bg  # noqa: E402
 from usf_constants import C_KM_S, OMEGA_B_H2_BBN  # noqa: E402
 
-os.makedirs('results', exist_ok=True)
-
 parser = argparse.ArgumentParser()
-parser.add_argument('--usf-chain', default='./chains/usf_bao_sn_sh0es')
-parser.add_argument('--lcdm-chain', default='./chains/lcdm_bao_sn_sh0es')
+parser.add_argument('--usf-chain', default='./chains/usf_bao_sn')
+parser.add_argument('--lcdm-chain', default='./chains/lcdm_bao_sn')
+parser.add_argument('--outdir', default='results/figures',
+                    help='destino das figuras (use um subdiretório por modelo/grade)')
 args = parser.parse_args()
+
+OUTDIR = args.outdir
+os.makedirs(OUTDIR, exist_ok=True)
 
 # ============================================================
 # 1. Load MCMC chains
@@ -77,8 +80,8 @@ wb_lcdm = mean_or(lcdm_stats, 'omega_b', OMEGA_B_H2_BBN)
 g = plots.get_subplot_plotter()
 g.triangle_plot([usf, lcdm], params=['H0'], filled=True,
                 legend_labels=['USF', 'ΛCDM'], title_fontsize=12)
-g.export('results/comparison_triangle.pdf')
-g.export('results/comparison_triangle.png')
+g.export(f'{OUTDIR}/comparison_triangle.pdf')
+g.export(f'{OUTDIR}/comparison_triangle.png')
 
 # ============================================================
 # 3. BAO observables D_M/r_d and D_H/r_d – DESI DR2 data
@@ -152,8 +155,8 @@ ax2r.grid(True, alpha=0.3)
 
 plt.suptitle('BAO observables – USF and ΛCDM vs DESI DR2', fontsize=14)
 plt.tight_layout()
-plt.savefig('results/BAO_observables_vs_DESI.pdf')
-plt.savefig('results/BAO_observables_vs_DESI.png', dpi=300)
+plt.savefig(f'{OUTDIR}/BAO_observables_vs_DESI.pdf')
+plt.savefig(f'{OUTDIR}/BAO_observables_vs_DESI.png', dpi=300)
 
 # ============================================================
 # 4. Parameter table (printed to terminal)
@@ -187,4 +190,4 @@ chi2_lcdm = read_best_fit_chi2(args.lcdm_chain)
 
 print("-" * 60)
 print(f"{'χ² (best-fit)':<20} {chi2_lcdm:.2f}           {chi2_usf:.2f}")
-print("\nAll figures saved to results/.")
+print(f"\nAll figures saved to {OUTDIR}/.")

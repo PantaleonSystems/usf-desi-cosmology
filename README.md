@@ -16,9 +16,10 @@
 > ΛCDM reference to H₀ ≈ 64.2 km/s/Mpc). The pipeline has since been
 > corrected, unified and validated against CAMB/astropy (see
 > `PROGRESSO_CODIGO.md` and `pdfs/PLANO_CORRECAO_REFEREE1.md`). **All
-> headline numbers from the earlier manuscript are superseded**; production
-> chains with the corrected pipeline are the next step. Figures currently in
-> `results/` predate the correction and will be regenerated.
+> headline numbers from the earlier manuscript are superseded**. The chains
+> and figures produced by the buggy pipeline have been **deleted** from the
+> repository; everything under `chains/` and `results/` is now output of the
+> corrected pipeline only.
 
 ---
 
@@ -108,6 +109,9 @@ usf-desi-cosmology/
 ├── docs/                           # NEUTRINOS.md, SN_CALIBRATION.md
 ├── usf_constants.py                # shared physical constants
 ├── run_pipeline.sh                 # tests → MCMC grid → figures
+├── results/figures/<tag>/          # figures, one directory per run group
+├── results/data/                   # numerical products (mocks, tables)
+├── logs/<run>.log                  # one execution log per run (git-ignored)
 ├── PROGRESSO_CODIGO.md             # execution log of the correction plan
 └── requirements.txt                # pinned dependencies (incl. camb, astropy, pytest)
 ```
@@ -143,18 +147,43 @@ bash run_pipeline.sh --grid all      # full grid (main + datasets + SH0ES + CMB 
 bash run_pipeline.sh --grid sh0es    # only the SH0ES-labelled variants
 bash run_pipeline.sh --grid cmb      # only the Planck-distance-prior variants
 bash run_pipeline.sh --plot-only     # regenerate figures from existing chains
-bash run_pipeline.sh --clean         # wipe chains and figures
+bash run_pipeline.sh --clean         # wipe chains, logs and figures (keeps results/data)
+bash run_pipeline.sh --clean-all     # idem, including results/data (mocks)
 ```
 
 Every sampling session is preceded by the pytest validation gate (skippable
 with `--skip-tests`, not recommended). Convergence: Gelman–Rubin
 R−1 < 0.01 on all parameters; chains resume automatically (`--resume`).
 
+**Testing a new model or parametrization.** Add
+`cobaya_configs/<name>.yaml`, then run it without touching the standard
+grids:
+
+```bash
+bash run_pipeline.sh --runs usf_newmodel_bao_sn,lcdm_bao_sn --tag newmodel --fresh
+```
+
+`--fresh` wipes that run's chain files before sampling instead of resuming.
+Use it **whenever the YAML changes theory or likelihood blocks** — otherwise
+Cobaya aborts with *"Old and new run information not compatible"* and the
+stale chain silently stays in place. `--tag` keeps the figures in their own
+`results/figures/<tag>/`, so runs never overwrite each other.
+
+Output layout:
+
+| Path | Content |
+| --- | --- |
+| `chains/<run>.*` | Cobaya samples and metadata |
+| `logs/<run>.log` | one execution log per run (git-ignored) |
+| `results/figures/<tag>/` | figures, one directory per run group |
+| `results/data/` | numerical products (mocks, tables); survives `--clean` |
+
 Individual runs:
 
 ```bash
 cobaya-run cobaya_configs/usf_bao_sn.yaml
-python plot_scripts/plot_triangle.py --usf-chain chains/usf_bao_sn --lcdm-chain chains/lcdm_bao_sn
+python plot_scripts/plot_triangle.py --usf-chain chains/usf_bao_sn \
+    --lcdm-chain chains/lcdm_bao_sn --outdir results/figures/bao_sn
 ```
 
 ## 8. Authors & Contact

@@ -10,10 +10,10 @@ Best-fit parameters are read from the USF chain when available; otherwise
 the values passed on the command line are used.
 
 Usage (from the repository root):
-    python plot_scripts/plot_omega_usf.py [--chain chains/usf_bao_sn_sh0es]
+    python plot_scripts/plot_omega_usf.py [--chain chains/usf_bao_sn]
         [--alpha-q -0.1] [--z-trans 4.66]
 
-Output (saved to results/):
+Output (saved to --outdir, default results/figures/):
     Omega_USF_evolution.pdf / .png
 
 Author: Pantaleon Systems
@@ -31,13 +31,16 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from theory_module import background as bg  # noqa: E402
 from usf_constants import DELTA  # noqa: E402
 
-os.makedirs('results', exist_ok=True)
-
 parser = argparse.ArgumentParser()
-parser.add_argument('--chain', default='./chains/usf_bao_sn_sh0es')
+parser.add_argument('--chain', default='./chains/usf_bao_sn')
 parser.add_argument('--alpha-q', type=float, default=None)
 parser.add_argument('--z-trans', type=float, default=None)
+parser.add_argument('--outdir', default='results/figures',
+                    help='destino das figuras (use um subdiretório por modelo/grade)')
 args = parser.parse_args()
+
+OUTDIR = args.outdir
+os.makedirs(OUTDIR, exist_ok=True)
 
 alpha_q, z_trans = args.alpha_q, args.z_trans
 if alpha_q is None or z_trans is None:
@@ -77,7 +80,7 @@ plt.legend(loc='lower right', fontsize=12)
 plt.grid(alpha=0.3)
 plt.tight_layout()
 
-plt.savefig('results/Omega_USF_evolution.pdf', bbox_inches='tight')
-plt.savefig('results/Omega_USF_evolution.png', dpi=300, bbox_inches='tight')
+plt.savefig(f'{OUTDIR}/Omega_USF_evolution.pdf', bbox_inches='tight')
+plt.savefig(f'{OUTDIR}/Omega_USF_evolution.png', dpi=300, bbox_inches='tight')
 
-print("Figure saved to results/Omega_USF_evolution.pdf")
+print(f"Figure saved to {OUTDIR}/Omega_USF_evolution.pdf")

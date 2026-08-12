@@ -8,10 +8,11 @@ Loads the USF and ΛCDM MCMC chains and generates:
 
 Usage (from the repository root):
     python plot_scripts/plot_triangle.py \
-        [--usf-chain chains/usf_bao_sn_sh0es] \
-        [--lcdm-chain chains/lcdm_bao_sn_sh0es]
+        [--usf-chain chains/usf_bao_sn] \
+        [--lcdm-chain chains/lcdm_bao_sn] \
+        [--outdir results/figures]
 
-Output (saved to results/):
+Output (saved to --outdir, default results/figures/):
     Overlaid_triangle_USF_vs_LCDM.pdf/.png – corner plot
     USF_H0_posterior.pdf/.png              – H0 marginal posterior
 
@@ -26,12 +27,15 @@ import matplotlib.pyplot as plt
 from getdist import plots
 from getdist.mcsamples import loadMCSamples
 
-os.makedirs('results', exist_ok=True)
-
 parser = argparse.ArgumentParser()
-parser.add_argument('--usf-chain', default='./chains/usf_bao_sn_sh0es')
-parser.add_argument('--lcdm-chain', default='./chains/lcdm_bao_sn_sh0es')
+parser.add_argument('--usf-chain', default='./chains/usf_bao_sn')
+parser.add_argument('--lcdm-chain', default='./chains/lcdm_bao_sn')
+parser.add_argument('--outdir', default='results/figures',
+                    help='destino das figuras (use um subdiretório por modelo/grade)')
 args = parser.parse_args()
+
+OUTDIR = args.outdir
+os.makedirs(OUTDIR, exist_ok=True)
 
 # ============================================================
 # 1. Load both chains (with burn-in)
@@ -85,7 +89,7 @@ g.triangle_plot(
 )
 
 for ext in ('.pdf', '.png'):
-    g.export(f'results/Overlaid_triangle_USF_vs_LCDM{ext}',
+    g.export(f'{OUTDIR}/Overlaid_triangle_USF_vs_LCDM{ext}',
              dpi=300 if ext == '.png' else None)
 
 # ============================================================
@@ -120,6 +124,6 @@ plt.title('H_0 posterior – USF model')
 plt.legend()
 plt.tight_layout()
 for ext in ('.pdf', '.png'):
-    plt.savefig(f'results/USF_H0_posterior{ext}', dpi=300 if ext == '.png' else None)
+    plt.savefig(f'{OUTDIR}/USF_H0_posterior{ext}', dpi=300 if ext == '.png' else None)
 
-print("\nAll figures saved to results/.")
+print(f"\nAll figures saved to {OUTDIR}/.")

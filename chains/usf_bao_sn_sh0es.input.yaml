@@ -1,0 +1,56 @@
+theory:
+  theory_module.usf_background.USF:
+    python_path: .
+likelihood:
+  theory_module.bao_desi_likelihood.BAODESILikelihood:
+    python_path: .
+    data_path: ./cobaya_packages/data/bao_data/desi_bao_dr2
+  sn.pantheonplus: null
+  theory_module.sh0es_likelihood.SH0ESLikelihood:
+    python_path: .
+    H0_obs: 73.04
+    sigma_H0: 1.04
+params:
+  H0:
+    prior:
+      min: 60
+      max: 80
+    ref: 70.0
+    proposal: 0.5
+    latex: H_0
+  Omega_m:
+    prior:
+      min: 0.2
+      max: 0.4
+    ref: 0.31
+    proposal: 0.005
+    latex: \Omega_m
+  omega_b:
+    prior:
+      dist: norm
+      loc: 0.02218
+      scale: 0.00055
+    ref: 0.02218
+    proposal: 0.0003
+    latex: \omega_b
+  alpha_q:
+    prior:
+      min: -0.3
+      max: 0.3
+    ref: 0.0
+    proposal: 0.002
+    latex: \alpha_q
+  z_trans:
+    prior:
+      min: 0.5
+      max: 20.0
+    ref: 3.0
+    proposal: 0.15
+    latex: z_{\rm trans}
+sampler:
+  mcmc:
+    Rminus1_stop: 0.01
+    max_tries: 10000
+    seed: 1001
+packages_path: ./cobaya_packages
+output: usf_bao_sn_sh0es

@@ -17,7 +17,7 @@ Usage (from the repository root; heavy — production numbers in the plan
 call for N ≥ 300, ideally 500–1000):
     .venv/bin/python analysis_scripts/run_mocks.py --n-mocks 300 \
         --h0 68.4 --omega-m 0.30 --omega-b 0.02218 \
-        [--with-sh0es] [--out results/mocks_null_dchi2.npz]
+        [--with-sh0es] [--out results/data/mocks_null_dchi2.npz]
 
 A quick smoke test: --n-mocks 2 --n-ztrans 4
 """
@@ -180,7 +180,7 @@ def main():
     ap.add_argument("--ztrans-max", type=float, default=20.0)
     ap.add_argument("--with-sh0es", action="store_true")
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--out", default="results/mocks_null_dchi2.npz")
+    ap.add_argument("--out", default="results/data/mocks_null_dchi2.npz")
     args = ap.parse_args()
 
     rng = np.random.default_rng(args.seed)

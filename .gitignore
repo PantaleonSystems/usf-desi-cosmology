@@ -225,3 +225,9 @@ __marimo__/
 
 # Cobaya chain sample files (heavy – only metadata is tracked)
 chains/*.txt
+
+# PolyChord grava um diretório por run
+chains/*_polychord/
+
+# Logs de execução (um por run, gerados por run_pipeline.sh)
+logs/
