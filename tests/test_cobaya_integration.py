@@ -16,7 +16,7 @@ import yaml
 from tests.conftest import REPO_ROOT
 
 REF_POINT = dict(H0=68.4, Omega_m=0.30, omega_b=0.02218,
-                 alpha_q=0.0, z_trans=2.0)
+                 Omega_TW=0.0, n=0.0)
 
 
 @pytest.fixture(scope="module")
@@ -53,7 +53,7 @@ def test_bao_chi2_reasonable_via_provider(model):
 
 
 def test_lcdm_limit_through_full_model(model):
-    """alpha_q = 0 posterior must not depend on z_trans (nested model)."""
-    p1 = model.logposterior({**REF_POINT, "z_trans": 0.7}).logpost
-    p2 = model.logposterior({**REF_POINT, "z_trans": 4.9}).logpost
+    """Omega_TW = 0 posterior must not depend on n (nested model)."""
+    p1 = model.logposterior({**REF_POINT, "n": -2.0}).logpost
+    p2 = model.logposterior({**REF_POINT, "n": 5.0}).logpost
     assert abs(p1 - p2) < 1e-8

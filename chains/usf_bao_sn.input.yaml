@@ -29,20 +29,20 @@ params:
     ref: 0.02218
     proposal: 0.0003
     latex: \omega_b
-  alpha_q:
+  Omega_TW:
     prior:
-      min: -0.3
+      min: 0.0
       max: 0.3
-    ref: 0.0
-    proposal: 0.002
-    latex: \alpha_q
-  z_trans:
+    ref: 0.03
+    proposal: 0.005
+    latex: \Omega_{\rm TW}
+  n:
     prior:
-      min: 0.5
-      max: 20.0
-    ref: 3.0
-    proposal: 0.15
-    latex: z_{\rm trans}
+      min: -2.0
+      max: 5.0
+    ref: 1.0
+    proposal: 0.1
+    latex: n
 sampler:
   mcmc:
     Rminus1_stop: 0.01

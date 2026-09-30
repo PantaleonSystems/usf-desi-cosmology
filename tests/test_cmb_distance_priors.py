@@ -12,7 +12,7 @@ import pytest
 
 # Planck 2018 TT,TE,EE+lowE posterior means (base_plikHM_TTTEEE_lowl_lowE)
 PLANCK_MEAN = dict(H0=67.27, Omega_m=0.3166, omega_b=0.02236,
-                   alpha_q=0.0, z_trans=2.0)
+                   Omega_TW=0.0, n=0.0)
 
 
 @pytest.fixture(scope="module")
@@ -37,9 +37,9 @@ def test_chi2_small_at_planck_mean(like):
     assert chi2 < 1.0
 
 
-def test_lcdm_limit_independent_of_ztrans(like):
-    p1 = like.logp(**{**PLANCK_MEAN, "z_trans": 0.7})
-    p2 = like.logp(**{**PLANCK_MEAN, "z_trans": 4.9})
+def test_lcdm_limit_independent_of_n(like):
+    p1 = like.logp(**{**PLANCK_MEAN, "n": -2.0})
+    p2 = like.logp(**{**PLANCK_MEAN, "n": 5.0})
     assert abs(p1 - p2) < 1e-12
 
 
@@ -47,11 +47,11 @@ def test_usf_term_affects_distance_to_last_scattering(like):
     """Referee 1, Comment 2: the low-z modification must propagate to D(z*)."""
     chi2_lcdm = -2.0 * like.logp(**PLANCK_MEAN)
     chi2_usf = -2.0 * like.logp(**{**PLANCK_MEAN,
-                                   "alpha_q": -0.1, "z_trans": 4.66})
+                                   "Omega_TW": 0.1, "n": 1.5})
     # A -0.1 geometric screening changes the line-of-sight integral: the
     # likelihood must register a substantially different chi².
     assert abs(chi2_usf - chi2_lcdm) > 1.0, (
-        f"chi² insensitive to alpha_q: {chi2_lcdm:.3f} vs {chi2_usf:.3f}"
+        f"chi² insensitive to Omega_TW: {chi2_lcdm:.3f} vs {chi2_usf:.3f}"
     )
 
 

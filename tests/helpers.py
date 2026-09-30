@@ -11,7 +11,7 @@ import os
 from tests.conftest import REPO_ROOT
 
 
-def make_theory(H0, Omega_m, alpha_q=0.0, z_trans=2.0, omega_b=0.02218, **extra):
+def make_theory(H0, Omega_m, Omega_TW=0.0, n=0.0, omega_b=0.02218, **extra):
     """Return a theory instance with parameters set, bypassing Cobaya init."""
     from theory_module.usf_background import USF
 
@@ -19,8 +19,8 @@ def make_theory(H0, Omega_m, alpha_q=0.0, z_trans=2.0, omega_b=0.02218, **extra)
     theo.H0 = H0
     theo.Omega_m = Omega_m
     theo.omega_b = omega_b
-    theo.alpha_q = alpha_q
-    theo.z_trans = z_trans
+    theo.Omega_TW = Omega_TW
+    theo.n = n
     for key, val in extra.items():
         setattr(theo, key, val)
     return theo

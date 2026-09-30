@@ -58,8 +58,8 @@ labels = {
     'H0': 'H_0',
     'Omega_m': '\\Omega_m',
     'omega_b': '\\omega_b',
-    'alpha_q': '\\alpha_q',
-    'z_trans': 'z_{\\rm trans}',
+    'Omega_TW': '\\Omega_{\\rm TW}',
+    'n': 'n',
 }
 
 for name, label in labels.items():
@@ -69,7 +69,7 @@ for name, label in labels.items():
             param.label = label
 
 # Plot only parameters actually present in the USF chain
-plot_params = [p for p in ('H0', 'Omega_m', 'omega_b', 'alpha_q', 'z_trans')
+plot_params = [p for p in ('H0', 'Omega_m', 'omega_b', 'Omega_TW', 'n')
                if samples_usf.getParamNames().parWithName(p) is not None]
 
 # ============================================================
@@ -98,13 +98,13 @@ for ext in ('.pdf', '.png'):
 stats_usf = samples_usf.getMargeStats()
 stats_lcdm = samples_lcdm.getMargeStats()
 
-msg = ("USF  : H0 = {:.2f} ± {:.2f}, Ω_m = {:.3f} ± {:.3f}".format(
+msg = ("USF-26n: H0 = {:.2f} ± {:.2f}, Ω_m = {:.3f} ± {:.3f}".format(
     stats_usf.parWithName('H0').mean, stats_usf.parWithName('H0').err,
     stats_usf.parWithName('Omega_m').mean, stats_usf.parWithName('Omega_m').err))
-if stats_usf.parWithName('alpha_q') is not None:
-    msg += ", α_q = {:.4f} ± {:.4f}, z_trans = {:.2f} ± {:.2f}".format(
-        stats_usf.parWithName('alpha_q').mean, stats_usf.parWithName('alpha_q').err,
-        stats_usf.parWithName('z_trans').mean, stats_usf.parWithName('z_trans').err)
+if stats_usf.parWithName('Omega_TW') is not None:
+    msg += ", Ω_TW = {:.4f} ± {:.4f}, n = {:.2f} ± {:.2f}".format(
+        stats_usf.parWithName('Omega_TW').mean, stats_usf.parWithName('Omega_TW').err,
+        stats_usf.parWithName('n').mean, stats_usf.parWithName('n').err)
 print(msg)
 
 print("ΛCDM : H0 = {:.2f} ± {:.2f}, Ω_m = {:.3f} ± {:.3f}".format(

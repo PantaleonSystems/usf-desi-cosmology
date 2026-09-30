@@ -50,42 +50,35 @@ _zstar_interp = None
 # Expansion history
 # ---------------------------------------------------------------------------
 
-def omega_usf(z, alpha_q, z_trans, delta=DELTA):
-    """Effective geometric correction Ω_USF(z) (dimensionless density term)."""
-    z = np.asarray(z, dtype=np.float64)
-    arg = np.clip((z - z_trans) / delta, -500.0, 500.0)
-    suppression = 1.0 / (1.0 + np.exp(arg))
-    return (alpha_q * suppression * (1.0 + z) ** 3
-            / (1.0 + (1.0 + z) ** 2 / z_trans ** 2))
+def omega_tw(z, Omega_TW, n):
+    """USF-26n dynamical density term Ω_TW (1+z)^n."""
+    return Omega_TW * (1.0 + np.asarray(z, dtype=np.float64)) ** n
 
 
-def E2(z, H0, Omega_m, alpha_q=0.0, z_trans=2.0, delta=DELTA):
-    """Squared dimensionless Hubble rate E²(z) = (H(z)/H0)², with E(0) = 1.
+def E2(z, H0, Omega_m, Omega_TW=0.0, n=0.0):
+    """Squared dimensionless Hubble rate for the USF-26n model.
 
-    Flatness fixes Ω_Λ = 1 − Ω_m − Ω_r − Ω_USF(0): a nonzero Ω_USF(0) is
-    compensated by Ω_Λ (not by H0 — see Topic 8 of the correction plan).
+    The Planck-density suppression is negligible for the data used here and
+    is therefore set to one. Flatness gives Ω_Λ = 1 - Ω_m - Ω_r - Ω_TW.
     """
     z = np.asarray(z, dtype=np.float64)
     Omega_r = OMEGA_R_H2 / (H0 / 100.0) ** 2
-    Oz0 = omega_usf(0.0, alpha_q, z_trans, delta) if alpha_q != 0.0 else 0.0
-    Omega_L = 1.0 - Omega_m - Omega_r - Oz0
-    Oz = omega_usf(z, alpha_q, z_trans, delta) if alpha_q != 0.0 else 0.0
+    Omega_L = 1.0 - Omega_m - Omega_r - Omega_TW
     return (Omega_m * (1.0 + z) ** 3 + Omega_r * (1.0 + z) ** 4
-            + Omega_L + Oz)
+            + Omega_L + omega_tw(z, Omega_TW, n))
 
 
-def E(z, H0, Omega_m, alpha_q=0.0, z_trans=2.0, delta=DELTA):
+def E(z, H0, Omega_m, Omega_TW=0.0, n=0.0):
     """Dimensionless Hubble rate E(z) = H(z)/H0."""
-    return np.sqrt(np.maximum(E2(z, H0, Omega_m, alpha_q, z_trans, delta), 1e-30))
+    return np.sqrt(np.maximum(E2(z, H0, Omega_m, Omega_TW, n), 1e-30))
 
 
-def hubble(z, H0, Omega_m, alpha_q=0.0, z_trans=2.0, delta=DELTA):
+def hubble(z, H0, Omega_m, Omega_TW=0.0, n=0.0):
     """H(z) in km/s/Mpc."""
-    return H0 * E(z, H0, Omega_m, alpha_q, z_trans, delta)
+    return H0 * E(z, H0, Omega_m, Omega_TW, n)
 
 
-def comoving_distance(z, H0, Omega_m, alpha_q=0.0, z_trans=2.0, delta=DELTA,
-                      grid_size=None):
+def comoving_distance(z, H0, Omega_m, Omega_TW=0.0, n=0.0, grid_size=None):
     """Line-of-sight comoving distance D_C(z) [Mpc]; scalar or array z.
 
     Vectorised cumulative-trapezoid integration on a fine grid followed by
@@ -102,23 +95,22 @@ def comoving_distance(z, H0, Omega_m, alpha_q=0.0, z_trans=2.0, delta=DELTA,
     if grid_size is None:
         grid_size = int(min(2e5, max(4000, 100 * z_max)))
     z_grid = np.linspace(0.0, z_max, grid_size)
-    integrand = C_KM_S / (H0 * E(z_grid, H0, Omega_m, alpha_q, z_trans, delta))
+    integrand = C_KM_S / (H0 * E(z_grid, H0, Omega_m, Omega_TW, n))
     dc_grid = integrate.cumulative_trapezoid(integrand, z_grid, initial=0.0)
     out = np.interp(z_arr, z_grid, dc_grid)
     return float(out[0]) if np.ndim(z) == 0 else out
 
 
-def angular_diameter_distance(z, H0, Omega_m, alpha_q=0.0, z_trans=2.0,
-                              delta=DELTA):
+def angular_diameter_distance(z, H0, Omega_m, Omega_TW=0.0, n=0.0):
     """Angular diameter distance D_A(z) = D_C(z)/(1+z) [Mpc]."""
     z_arr = np.asarray(z, dtype=np.float64)
-    return comoving_distance(z, H0, Omega_m, alpha_q, z_trans, delta) / (1.0 + z_arr)
+    return comoving_distance(z, H0, Omega_m, Omega_TW, n) / (1.0 + z_arr)
 
 
-def luminosity_distance(z, H0, Omega_m, alpha_q=0.0, z_trans=2.0, delta=DELTA):
+def luminosity_distance(z, H0, Omega_m, Omega_TW=0.0, n=0.0):
     """Luminosity distance D_L(z) = (1+z) D_C(z) [Mpc]."""
     z_arr = np.asarray(z, dtype=np.float64)
-    return comoving_distance(z, H0, Omega_m, alpha_q, z_trans, delta) * (1.0 + z_arr)
+    return comoving_distance(z, H0, Omega_m, Omega_TW, n) * (1.0 + z_arr)
 
 
 # ---------------------------------------------------------------------------
@@ -154,12 +146,10 @@ def _E2h2_with_massive_nu(z, omega_m, omega_l_h2):
             + rho_nu + omega_l_h2)
 
 
-def comoving_distance_cmb(z_star_val, H0, Omega_m, alpha_q=0.0, z_trans=2.0,
-                          delta=DELTA):
+def comoving_distance_cmb(z_star_val, H0, Omega_m, Omega_TW=0.0, n=0.0):
     """D_M(z*) [Mpc] with the massive-neutrino transition resolved.
 
-    Used by the CMB distance-prior likelihood; includes the USF term (it
-    vanishes for z ≫ z_trans but contributes along the line of sight).
+    Used by the CMB distance-prior likelihood; includes the USF-26n term.
     """
     h2 = (H0 / 100.0) ** 2
     omega_m = Omega_m * h2
@@ -167,10 +157,8 @@ def comoving_distance_cmb(z_star_val, H0, Omega_m, alpha_q=0.0, z_trans=2.0,
 
     z_grid = np.linspace(0.0, float(z_star_val), 120000)
     e2h2 = _E2h2_with_massive_nu(z_grid, omega_m, omega_l_h2)
-    if alpha_q != 0.0:
-        ousf = (omega_usf(z_grid, alpha_q, z_trans, delta)
-                - omega_usf(0.0, alpha_q, z_trans, delta)) * h2
-        e2h2 = e2h2 + ousf
+    if Omega_TW != 0.0:
+        e2h2 = e2h2 + Omega_TW * h2 * ((1.0 + z_grid) ** n - 1.0)
     integrand = C_KM_S / (100.0 * np.sqrt(e2h2))
     return float(np.trapezoid(integrand, z_grid))
 

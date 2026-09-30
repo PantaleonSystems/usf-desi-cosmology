@@ -1,7 +1,7 @@
 """
 Topic 1 — External validation of the background in the ΛCDM limit (alpha_q = 0).
 
-Compares E(z), the comoving distance and the angular diameter distance of the
+    Compares E(z), the comoving distance and the angular diameter distance of the
 shared background module (consumed by theory, likelihoods and plots) against
 astropy.cosmology.FlatLambdaCDM over a grid of (H0, Omega_m).  The astropy
 cosmology is built so that its *total* radiation density matches the
@@ -46,14 +46,14 @@ def matched_astropy(H0, Omega_m):
 @pytest.mark.parametrize("H0,Omega_m", GRID)
 def test_E_of_z_matches_astropy(H0, Omega_m):
     cosmo = matched_astropy(H0, Omega_m)
-    ours = bg.E(Z_TEST, H0, Omega_m, alpha_q=0.0)
+    ours = bg.E(Z_TEST, H0, Omega_m, Omega_TW=0.0, n=0.0)
     ref = cosmo.efunc(Z_TEST)
     np.testing.assert_allclose(ours, ref, rtol=1e-8)
 
 
 @pytest.mark.parametrize("H0,Omega_m", GRID)
 def test_comoving_distance_matches_astropy(H0, Omega_m):
-    theo = make_theory(H0, Omega_m, alpha_q=0.0)
+    theo = make_theory(H0, Omega_m, Omega_TW=0.0, n=0.0)
     cosmo = matched_astropy(H0, Omega_m)
     for z in Z_TEST:
         ours = theo.get_comoving_distance(float(z))
@@ -66,24 +66,24 @@ def test_comoving_distance_matches_astropy(H0, Omega_m):
 
 @pytest.mark.parametrize("H0,Omega_m", GRID)
 def test_angular_diameter_distance_matches_astropy(H0, Omega_m):
-    theo = make_theory(H0, Omega_m, alpha_q=0.0)
+    theo = make_theory(H0, Omega_m, Omega_TW=0.0, n=0.0)
     cosmo = matched_astropy(H0, Omega_m)
     ours = np.asarray(theo.get_angular_diameter_distance(Z_TEST))
     ref = cosmo.angular_diameter_distance(Z_TEST).value
     np.testing.assert_allclose(ours, ref, rtol=5e-4)
 
 
-def test_lcdm_limit_alpha_q_zero():
-    """alpha_q = 0 must reduce the USF exactly to ΛCDM for any z_trans."""
+def test_lcdm_limit_tw_zero():
+    """Omega_TW = 0 must reduce USF-26n exactly to ΛCDM for any n."""
     z = np.linspace(0.0, 10.0, 101)
-    ref = bg.E(z, 70.0, 0.31, alpha_q=0.0, z_trans=2.0)
-    for zt in (0.7, 4.66, 15.0):
-        alt = bg.E(z, 70.0, 0.31, alpha_q=0.0, z_trans=zt)
+    ref = bg.E(z, 70.0, 0.31, Omega_TW=0.0, n=0.0)
+    for exponent in (-2.0, 0.0, 5.0):
+        alt = bg.E(z, 70.0, 0.31, Omega_TW=0.0, n=exponent)
         np.testing.assert_allclose(alt, ref, rtol=1e-14)
 
 
 def test_E_normalised_at_zero():
     """Flatness bookkeeping: E(0) = 1 also with the USF term switched on."""
-    for aq, zt in [(-0.1, 4.66), (0.05, 1.0), (-0.25, 12.0)]:
-        e0 = float(bg.E(0.0, 72.0, 0.37, alpha_q=aq, z_trans=zt))
+    for tw, exponent in [(0.1, -1.0), (0.05, 1.0), (0.25, 5.0)]:
+        e0 = float(bg.E(0.0, 72.0, 0.37, Omega_TW=tw, n=exponent))
         assert abs(e0 - 1.0) < 1e-12

@@ -29,10 +29,10 @@ params:
     ref: 0.02218
     proposal: 0.0003
     latex: \omega_b
-  alpha_q:
+  Omega_TW:
     value: 0.0
-  z_trans:
-    value: 2.0
+  n:
+    value: 0.0
 sampler:
   mcmc:
     Rminus1_stop: 0.01

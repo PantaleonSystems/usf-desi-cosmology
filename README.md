@@ -29,18 +29,20 @@ The USF framework is tested here as an **effective background
 parametrization**: a redshift-dependent geometric correction added to the
 flat ΛCDM Friedmann equation,
 
-$$E^2(z) = \Omega_m (1+z)^3 + \Omega_r (1+z)^4 + \Omega_\Lambda + \Omega_\text{USF}(z),$$
+$$E^2(z) = \Omega_m (1+z)^3 + \Omega_r (1+z)^4 + \Omega_\Lambda + \Omega_\text{TW}(z),$$
 
-$$\Omega_\text{USF}(z) = \frac{\alpha_q \, \sigma(z;\, z_\text{trans},\, \delta)\, (1+z)^3}{1 + (1+z)^2 / z_\text{trans}^2},$$
+$$\Omega_\text{TW}(z) = \Omega_\text{TW}(1+z)^n.$$
 
-with a logistic suppression σ centred on z_trans (fixed width δ = 0.25) and
-flatness enforced through Ω_Λ = 1 − Ω_m − Ω_r − Ω_USF(0), so E(0) = 1 by
-construction. ΛCDM is recovered exactly at α_q = 0 (nested model).
+USF-26n is a phenomenological background parametrization. Its Planck-density
+factor is set to one in the BAO, supernova and distance-prior range, where
+rho/rho_c is negligible. Flatness is enforced through
+Omega_Lambda = 1 - Omega_m - Omega_r - Omega_TW, so E(0) = 1 by construction.
+LambdaCDM is recovered exactly at Omega_TW = 0 (nested model).
 
-Sampled parameters: **H₀, Ω_m (total matter), ω_b (BBN Gaussian prior),
-α_q, z_trans** (the last two absent in the ΛCDM control). The physical
-radiation density is fixed (ω_γ = 2.4728×10⁻⁵, N_eff = 3.044); Σm_ν =
-0.06 eV — see `docs/NEUTRINOS.md`.
+Sampled parameters: **H0, Omega_m (total matter), omega_b (BBN Gaussian prior),
+Omega_TW, n** (the last two absent in the LambdaCDM control). The physical
+radiation density is fixed; the neutrino convention is documented in
+`docs/NEUTRINOS.md`.
 
 ## 2. Pipeline validation (corrected, 2026-07)
 
@@ -52,14 +54,7 @@ radiation density is fixed (ω_γ = 2.4728×10⁻⁵, N_eff = 3.044); Σm_ν =
 | DESI DR2 BAO likelihood at the published best fit | χ² = 10.3 / 13 points (was 227.5) |
 | Planck 2018 distance priors at the Planck mean | χ² = 0.29 |
 
-Run the full validation gate with:
-
-```bash
-.venv/bin/python -m pytest tests/ -q      # 44 tests
-```
-
 ## 3. Datasets and likelihoods
-
 | Likelihood | Data | Notes |
 | --- | --- | --- |
 | `theory_module.bao_desi_likelihood.BAODESILikelihood` | DESI **DR2** BAO (D_M/r_d, D_H/r_d, D_V/r_d; official mean + covariance) | r_d computed per sample from (ω_b, ω_m) with CAMB-calibrated z_drag; theory served via Cobaya provider |
@@ -73,22 +68,18 @@ Run the full validation gate with:
 | Config | Data | Purpose |
 | --- | --- | --- |
 | `usf_bao_sn.yaml` / `lcdm_bao_sn.yaml` | BAO+BBN+SN | **Main runs** — no local H₀ information |
-| `usf_bao.yaml`, `lcdm_bao.yaml`, `usf_sn.yaml`, `lcdm_sn.yaml` | single datasets | which dataset drives α_q |
+| `usf_bao.yaml`, `lcdm_bao.yaml`, `usf_sn.yaml`, `lcdm_sn.yaml` | single datasets | which dataset constrains Omega_TW and n |
 | `usf_bao_sn_sh0es.yaml` / `lcdm_...` | + SH0ES prior | labelled variant |
 | `*_cmb.yaml` (4) | + Planck distance priors | CMB geometric consistency |
 | `*_polychord.yaml` (4) | nested sampling | Bayesian evidence (needs `cobaya-install polychord`) |
 
-All configs carry fixed seeds; the USF prior on z_trans is U(0.5, 20)
-(extended after the referee noted the earlier posterior was truncated at
-the U(0.5, 5) boundary).
-
-Statistical calibration of Δχ² under the ΛCDM null (z_trans profiled —
-look-elsewhere effect):
+All configs carry fixed seeds; the USF-26n priors are Omega_TW in [0, 0.3]
+and n in [-2, 5]. Statistical calibration of Delta chi2 under the LambdaCDM
+null profiles n to account for the look-elsewhere effect:
 
 ```bash
 .venv/bin/python analysis_scripts/run_mocks.py --n-mocks 300
 ```
-
 ## 5. Repository structure
 
 ```

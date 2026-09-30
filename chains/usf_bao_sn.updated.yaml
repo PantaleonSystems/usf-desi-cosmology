@@ -4,8 +4,8 @@ theory:
       H0: null
       Omega_m: null
       omega_b: null
-      alpha_q: null
-      z_trans: null
+      Omega_TW: null
+      n: null
     speed: -1
     stop_at_error: false
     version: null
@@ -14,8 +14,8 @@ theory:
     - H0
     - Omega_m
     - omega_b
-    - alpha_q
-    - z_trans
+    - Omega_TW
+    - n
     output_params: []
 likelihood:
   theory_module.bao_desi_likelihood.BAODESILikelihood:
@@ -63,20 +63,20 @@ params:
     ref: 0.02218
     proposal: 0.0003
     latex: \omega_b
-  alpha_q:
+  Omega_TW:
     prior:
-      min: -0.3
+      min: 0.0
       max: 0.3
-    ref: 0.0
-    proposal: 0.002
-    latex: \alpha_q
-  z_trans:
+    ref: 0.03
+    proposal: 0.005
+    latex: \Omega_{\rm TW}
+  n:
     prior:
-      min: 0.5
-      max: 20.0
-    ref: 3.0
-    proposal: 0.15
-    latex: z_{\rm trans}
+      min: -2.0
+      max: 5.0
+    ref: 1.0
+    proposal: 0.1
+    latex: n
   chi2__SN:
     latex: \chi^2_\mathrm{SN}
     derived: true
@@ -110,8 +110,8 @@ sampler:
       - - H0
         - Omega_m
         - omega_b
-        - alpha_q
-        - z_trans
+        - Omega_TW
+        - n
     callback_function: null
     callback_every: null
     seed: 1003

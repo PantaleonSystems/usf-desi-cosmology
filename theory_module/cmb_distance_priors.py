@@ -72,8 +72,8 @@ class CMBDistancePriors(Likelihood):
         "H0": None,
         "Omega_m": None,
         "omega_b": None,
-        "alpha_q": None,
-        "z_trans": None,
+        "Omega_TW": None,
+        "n": None,
     }
 
     def initialize(self):
@@ -83,17 +83,16 @@ class CMBDistancePriors(Likelihood):
     # --- CHW19 background convention (their Eqs. 3, 5, 6) -----------------
 
     @staticmethod
-    def _E_chw(z, Omega_m, omega_m, alpha_q, z_trans):
+    def _E_chw(z, Omega_m, omega_m, Omega_TW, n):
         z = np.asarray(z, dtype=np.float64)
         z_eq = 2.5e4 * omega_m * _T_FAC
         Omega_r = Omega_m / (1.0 + z_eq)
-        Oz0 = bg.omega_usf(0.0, alpha_q, z_trans) if alpha_q != 0.0 else 0.0
-        Omega_de = 1.0 - Omega_m - Omega_r - Oz0
-        Oz = bg.omega_usf(z, alpha_q, z_trans) if alpha_q != 0.0 else 0.0
+        Omega_de = 1.0 - Omega_m - Omega_r - Omega_TW
+        Oz = Omega_TW * (1.0 + z) ** n
         return np.sqrt(Omega_r * (1.0 + z) ** 4 + Omega_m * (1.0 + z) ** 3
                        + Omega_de + Oz)
 
-    def _predict(self, H0, Omega_m, omega_b, alpha_q, z_trans):
+    def _predict(self, H0, Omega_m, omega_b, Omega_TW, n):
         omega_m = Omega_m * (H0 / 100.0) ** 2
         z_star = bg.z_star(omega_b, omega_m)
 
@@ -101,14 +100,14 @@ class CMBDistancePriors(Likelihood):
         z_grid = np.linspace(0.0, z_star, 120000)
         DM = np.trapezoid(
             C_KM_S / (H0 * self._E_chw(z_grid, Omega_m, omega_m,
-                                       alpha_q, z_trans)), z_grid)
+                                       Omega_TW, n)), z_grid)
 
         # Sound horizon at z* (their Eq. 3)
         fac = 31500.0 * omega_b * _T_FAC
 
         def integrand(z):
             return (C_KM_S
-                    / (H0 * self._E_chw(z, Omega_m, omega_m, alpha_q, z_trans)
+                    / (H0 * self._E_chw(z, Omega_m, omega_m, Omega_TW, n)
                        * np.sqrt(3.0 * (1.0 + fac / (1.0 + z)))))
 
         rs, _ = integrate.quad(integrand, z_star, np.inf,
@@ -118,7 +117,7 @@ class CMBDistancePriors(Likelihood):
         l_A = np.pi * DM / rs
         return R, l_A
 
-    def logp(self, H0, Omega_m, omega_b, alpha_q, z_trans, **kwargs):
-        R, l_A = self._predict(H0, Omega_m, omega_b, alpha_q, z_trans)
+    def logp(self, H0, Omega_m, omega_b, Omega_TW, n, **kwargs):
+        R, l_A = self._predict(H0, Omega_m, omega_b, Omega_TW, n)
         delta = np.array([R, l_A, omega_b]) - _DATA
         return -0.5 * delta @ self.cov_inv @ delta

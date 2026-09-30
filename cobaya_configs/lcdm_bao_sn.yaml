@@ -18,10 +18,10 @@ params:
     ref: 0.02218
     proposal: 0.0003
     latex: \omega_b
-  alpha_q:
-    value: 0.0 # desliga a correção USF (limite ΛCDM exato)
-  z_trans:
-    value: 2.0 # sem efeito quando alpha_q = 0
+  Omega_TW:
+    value: 0.0 # limite ΛCDM exato
+  n:
+    value: 0.0 # sem efeito quando Omega_TW = 0
 
 theory:
   theory_module.usf_background.USF:
